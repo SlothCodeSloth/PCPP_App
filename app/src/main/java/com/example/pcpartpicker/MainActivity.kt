@@ -1,5 +1,6 @@
 package com.example.pcpartpicker
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -50,7 +51,7 @@ class MainActivity : AppCompatActivity() {
     private fun createRetrofitAPI(): PyPartPickerAPI {
         val retrofit = Retrofit.Builder()
             // API URL
-            .baseUrl("https://66f7-108-30-195-184.ngrok-free.app")
+            .baseUrl("https://ac7d-108-30-195-184.ngrok-free.app")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
@@ -68,7 +69,16 @@ class MainActivity : AppCompatActivity() {
                     val parts = response.body()
                     // Display results
                     if (parts != null) {
-                        val adapter = ComponentAdapter(parts)
+                        val adapter = ComponentAdapter(parts) {
+                            part ->
+                            val intent = Intent(this@MainActivity, DetailActivity::class.java).apply {
+                                putExtra("product_name", part.name)
+                                putExtra("product_price", part.price)
+                                putExtra("product_image", part.image)
+                                putExtra("product_url", part.url)
+                            }
+                            startActivity(intent)
+                        }
                         recyclerView.adapter = adapter
                     }
                 }
@@ -79,29 +89,4 @@ class MainActivity : AppCompatActivity() {
             }
         })
     }
-
-    /*
-    private fun searchParts(query: String, textView: TextView) {
-        api.searchParts(query, 10, "us").enqueue(object: Callback<List<Component.Part>> {
-            override fun onResponse(
-                call: Call<List<Component.Part>>,
-                response: Response<List<Component.Part>>
-            ) {
-                if (response.isSuccessful) {
-                    val parts = response.body()
-                    // Display results
-                    textView.text = parts?.joinToString ("\n"){ it.name }
-                }
-                else {
-                    textView.text = "error: ${response.code()}"
-                }
-            }
-
-            override fun onFailure(call: Call<List<Component.Part>>, t: Throwable) {
-                textView.text = "Failed to fetch data: ${t.message}"
-                t.printStackTrace()
-            }
-        })
-    }
-    */
 }
