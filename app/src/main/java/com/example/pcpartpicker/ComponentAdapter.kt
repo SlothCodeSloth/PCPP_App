@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 
 class ComponentAdapter (
-    private val products: List<Component.Part>,
+    private val products: MutableList<Component.Part>,
     private val onItemClick: (Component.Part) -> Unit)
     : RecyclerView.Adapter<ComponentAdapter.ProductViewHolder>() {
         class ProductViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -42,12 +42,10 @@ class ComponentAdapter (
     override fun getItemCount(): Int = products.size
 
     // Dynamically add items into the RecyclerView
-    /*
     fun addComponents(newProducts: List<Component.Part>) {
         val startIndex = products.size
         products.addAll(newProducts)
         notifyItemRangeInserted(startIndex, newProducts.size)
     }
-    */
 }
 
