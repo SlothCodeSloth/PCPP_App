@@ -11,7 +11,6 @@ class Component {
     data class Product(
         val name: String,
         val specs: Map<String, String>,
-        //val priceList: List<Price>
         val priceList: List<Vendor>,
         val image: String?,
         val rating: Rating?

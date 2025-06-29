@@ -59,14 +59,6 @@ class DetailActivity : AppCompatActivity() {
             startActivity(browserIntent)
         }
 
-        // Fetch Product Specifications
-        /*
-        viewModel.fetchProduct(url ?: return).observe(this) { product ->
-            val specs = product.specs.entries.joinToString("\n") { "${it.key}: ${it.value}"}
-            detailSpecs.text = specs
-        }
-         */
-
         lifecycleScope.launch {
             try {
                 val product = viewModel.fetchProduct(url ?: return@launch)
@@ -80,86 +72,5 @@ class DetailActivity : AppCompatActivity() {
         }
 
         // TODO - Add to List Button
-
-        //fetchProductSpecs(url, detailSpecs)
     }
-
-    /*
-    private fun fetchProductSpecs(url: String?,detailSpecs: TextView) {
-        if (url == null) {
-            return
-        }
-        Log.d("TAG", "Check 1")
-        val retrofit = Retrofit.Builder()
-            .baseUrl("https://6dab-108-30-195-184.ngrok-free.app")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-
-        Log.d("TAG", "Check 2")
-        val api = retrofit.create(PyPartPickerApi::class.java)
-        Log.d("TAG", "Check 3")
-
-
-        api.fetchProduct(url).enqueue(object : Callback<Component.Product> {
-            override fun onResponse(
-                call: Call<Component.Product>,
-                response: Response<Component.Product>
-            ) {
-                if (response.isSuccessful) {
-                    Log.d("TAG", "Check 4")
-                    val product = response.body()
-                    val specs = product?.specs?.entries?.joinToString("\n") { "${it.key}: ${it.value}"} ?: "No specs available"
-                    detailSpecs.text = specs
-                }
-                else {
-                    detailSpecs.text = "Failed to retrieve specs."
-                }
-            }
-
-            override fun onFailure(call: Call<Component.Product>, t: Throwable) {
-                detailSpecs.text = "Failed to retreive specs: ${t.message}"
-            }
-        })
-    }
-     */
 }
-
-    /*
-    private fun fetchProductSpecs(url: String?,detailSpecs: TextView) {
-        if (url == null) {
-            return
-        }
-        Log.d("TAG", "Check 1")
-        val retrofit = Retrofit.Builder()
-            .baseUrl("https://6dab-108-30-195-184.ngrok-free.app")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-
-        Log.d("TAG", "Check 2")
-        val api = retrofit.create(PyPartPickerApi::class.java)
-        Log.d("TAG", "Check 3")
-
-
-        api.fetchProduct(url).enqueue(object : Callback<Component.Product> {
-            override fun onResponse(
-                call: Call<Component.Product>,
-                response: Response<Component.Product>
-            ) {
-                if (response.isSuccessful) {
-                    Log.d("TAG", "Check 4")
-                    val product = response.body()
-                    val specs = product?.specs?.entries?.joinToString("\n") { "${it.key}: ${it.value}"} ?: "No specs available"
-                    detailSpecs.text = specs
-                }
-                else {
-                    detailSpecs.text = "Failed to retrieve specs."
-                }
-            }
-
-            override fun onFailure(call: Call<Component.Product>, t: Throwable) {
-                detailSpecs.text = "Failed to retreive specs: ${t.message}"
-            }
-        })
-    }
-     */
-//}

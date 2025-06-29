@@ -37,8 +37,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Initialize Retrofit
-        // api = createRetrofitAPI()
-
         val searchButton = findViewById<Button>(R.id.searchButton)
         val searchText = findViewById<EditText>(R.id.searchText)
         recyclerView = findViewById(R.id.recyclerView)
@@ -99,78 +97,5 @@ class MainActivity : AppCompatActivity() {
                 viewModel.clearErrorMessage()
             }
         })
-
-        /*
-        //recyclerView.layoutManager = LinearLayoutManager(this)
-        val adapter = ComponentAdapter(mutableListOf()) { part ->
-            val intent = Intent(this, DetailActivity::class.java).apply {
-                putExtra("product_name", part.name)
-                putExtra("product_url", part.url)
-                putExtra("product_price", part.price)
-                putExtra("product_image", part.image)
-            }
-            startActivity(intent)
-        }
-        recyclerView.adapter = adapter
-        recyclerView.layoutManager = LinearLayoutManager(this)
-
-        searchButton.setOnClickListener {
-            //var searchTerm : String = searchText.text.toString()
-            //currentSearchTerm = searchTerm
-            currentSearchTerm = searchText.text.toString()
-            currentPage = 1
-            adapter.addComponents(emptyList())
-            loadMoreData(adapter)
-        }
-
-        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-                val totalItemCount = layoutManager.itemCount
-                val lastVisibleItem = layoutManager.findLastVisibleItemPosition()
-
-                // Load more components
-                if (!isLoading && lastVisibleItem >= totalItemCount - 2) {
-                    loadMoreData(adapter)
-                }
-            }
-        })
-    }
-
-    // Initialize the Retrofit API
-    private fun createRetrofitAPI(): PyPartPickerApi {
-        val retrofit = Retrofit.Builder()
-            // API URL
-            .baseUrl("https://6dab-108-30-195-184.ngrok-free.app")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-
-        return retrofit.create(PyPartPickerApi::class.java)
-    }
-
-    private fun loadMoreData(adapter: ComponentAdapter) {
-        isLoading = true
-        api.searchParts(currentSearchTerm, currentPage * PAGE_SIZE, "us")
-            .enqueue(object : Callback<List<Component.Part>> {
-                override fun onResponse(
-                    call: Call<List<Component.Part>>,
-                    response: Response<List<Component.Part>>
-                ) {
-                    if (response.isSuccessful) {
-                        val newParts = response.body() ?: emptyList()
-                        adapter.addComponents(newParts)
-                        currentPage++
-                    }
-                    isLoading = false
-                }
-
-                override fun onFailure(call: Call<List<Component.Part>>, t: Throwable) {
-                    t.printStackTrace()
-                    isLoading = false
-                }
-            })
-
-         */
     }
 }
