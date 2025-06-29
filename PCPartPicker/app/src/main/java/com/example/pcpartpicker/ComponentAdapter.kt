@@ -47,5 +47,10 @@ class ComponentAdapter (
         products.addAll(newProducts)
         notifyItemRangeInserted(startIndex, newProducts.size)
     }
+
+    fun clearComponents() {
+        products.clear()
+        notifyDataSetChanged()
+    }
 }
 

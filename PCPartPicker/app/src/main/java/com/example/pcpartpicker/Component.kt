@@ -5,13 +5,16 @@ class Component {
         val name: String,
         val url: String,
         val price: String,
-        val image: String
+        val image: String?
     )
 
     data class Product(
         val name: String,
         val specs: Map<String, String>,
-        val priceList: List<Price>
+        //val priceList: List<Price>
+        val priceList: List<Vendor>,
+        val image: String?,
+        val rating: Rating?
     )
 
     data class Spec(
