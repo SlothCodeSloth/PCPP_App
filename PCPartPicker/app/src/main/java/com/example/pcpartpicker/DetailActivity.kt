@@ -1,21 +1,26 @@
 package com.example.pcpartpicker
 
 import android.content.Intent
+import android.graphics.Typeface
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.TableLayout
+import android.widget.TableRow
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.setPadding
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.launch
+import org.w3c.dom.Text
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -36,7 +41,9 @@ class DetailActivity : AppCompatActivity() {
         val detailName: TextView = findViewById(R.id.detailName)
         val detailPrice: TextView = findViewById(R.id.detailPrice)
         val detailLink: Button = findViewById(R.id.detailLink)
-        val detailSpecs: TextView = findViewById(R.id.specs)
+        //val detailSpecs: TextView = findViewById(R.id.specs)
+        val specTable: TableLayout = findViewById(R.id.specTable)
+        specTable.removeAllViews()
 
         // Get Data from Main Activity (Intent)
         val name = intent.getStringExtra("product_name")
@@ -46,7 +53,7 @@ class DetailActivity : AppCompatActivity() {
 
         // Apply data to attributes
         detailName.text = name
-        detailPrice.text = price
+        detailPrice.text = "$$price"
         Glide.with(this)
             .load(image)
             .placeholder(R.drawable.ic_launcher_background)
@@ -62,12 +69,29 @@ class DetailActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val product = viewModel.fetchProduct(url ?: return@launch)
-                val specs = product.specs.entries.joinToString ("\n"){ "${it.key}: ${it.value}" }
-                detailSpecs.text = specs
+                //val specs = product.specs.entries.joinToString ("\n"){ "${it.key}: ${it.value}" }
+                //detailSpecs.text = specs
+                for ((key ,value) in product.specs.entries) {
+                    val row = TableRow(this@DetailActivity)
+
+                    val keyText = TextView(this@DetailActivity)
+                    keyText.text = key
+                    keyText.setPadding(8, 8, 16, 8)
+                    keyText.setTypeface(null, Typeface.BOLD)
+
+                    val valueText = TextView(this@DetailActivity)
+                    valueText.text = value
+                    valueText.setPadding(8, 8, 8, 8)
+
+                    row.addView(keyText)
+                    row.addView(valueText)
+
+                    specTable.addView(row)
+                }
             }
             catch (e: Exception) {
                 Log.e("DetailActivity", "Error fetching product details: ${e.message}")
-                detailSpecs.text = "Failed to load specifications."
+                //detailSpecs.text = "Failed to load specifications."
             }
         }
 

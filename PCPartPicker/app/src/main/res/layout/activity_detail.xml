@@ -3,6 +3,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:fitsSystemWindows="true"
     android:padding="16dp">
 
     <LinearLayout
@@ -46,6 +48,15 @@
             android:text="Specifications"
             android:layout_gravity="center"
             android:layout_marginBottom="16dp" />
+
+        <TableLayout
+            android:id="@+id/specTable"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:stretchColumns="1"
+            android:layout_marginTop="16dp"
+            android:padding="8dp"
+            />
 
         <Button
             android:id="@+id/detailLink"
