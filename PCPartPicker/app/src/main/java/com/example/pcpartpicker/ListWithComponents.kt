@@ -9,7 +9,11 @@ data class ListWithComponents(
     @Relation(
         parentColumn = "id",
         entityColumn = "url",
-        associateBy = Junction(ListComponentCrossRef::class)
+        associateBy = Junction(
+            ListComponentCrossRef::class,
+            parentColumn = "listId",
+            entityColumn = "componentUrl"
+            )
     )
 
     val component: List<ComponentEntity>
