@@ -97,4 +97,15 @@ class DetailActivity : AppCompatActivity() {
 
         // TODO - Add to List Button
     }
+
+    companion object {
+        fun newIntent(context: android.content.Context, part: Component.Part): Intent {
+            return Intent(context, DetailActivity::class.java).apply {
+                putExtra("product_name", part.name)
+                putExtra("product_url", part.url)
+                putExtra("product_price", part.price)
+                putExtra("product_image", part.image)
+            }
+        }
+    }
 }

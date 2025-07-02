@@ -16,5 +16,5 @@ data class ListWithComponents(
             )
     )
 
-    val component: List<ComponentEntity>
+    val components: List<ComponentEntity>
 )

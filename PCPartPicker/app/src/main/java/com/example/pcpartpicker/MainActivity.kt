@@ -2,6 +2,7 @@ package com.example.pcpartpicker
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -12,90 +13,32 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import retrofit2.*
 import retrofit2.converter.gson.GsonConverterFactory
 
 class MainActivity : AppCompatActivity() {
     // Oconomowoc
     private val viewModel: PartViewModel by viewModels { PartViewModelFactory((application as MyApplication).api) }
-    private lateinit var api : PyPartPickerApi
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var adapter: ComponentAdapter
-    private var isLoading = false
-    private val PAGE_SIZE = 5
-    private var currentPage = 1
-    private lateinit var currentSearchTerm: String
+    private lateinit var viewPager: ViewPager2
+    private lateinit var pagerAdapter: MainPagerAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         //enableEdgeToEdge()
         setContentView(R.layout.activity_main)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
+
+        viewPager = findViewById<ViewPager2>(R.id.viewPager)
+        val fab = findViewById<FloatingActionButton>(R.id.addListFab)
+
+        val listNames = mutableListOf("List 1", "List 2")
+
+        val pagerAdapter = MainPagerAdapter(this, listNames)
+        viewPager.adapter = pagerAdapter
+
+        fab.setOnClickListener {
+
         }
-
-        // Initialize Retrofit
-        val searchButton = findViewById<Button>(R.id.searchButton)
-        val searchText = findViewById<EditText>(R.id.searchText)
-        recyclerView = findViewById(R.id.recyclerView)
-
-        adapter = ComponentAdapter(mutableListOf()) { part ->
-            val intent = Intent(this, DetailActivity::class.java).apply {
-                putExtra("product_name", part.name)
-                putExtra("product_url", part.url)
-                putExtra("product_price", part.price)
-                putExtra("product_image", part.image)
-            }
-            startActivity(intent)
-        }
-
-        recyclerView.adapter = adapter
-        recyclerView.layoutManager = LinearLayoutManager(this)
-
-        // Set up Search Button
-        searchButton.setOnClickListener {
-            val query = searchText.text.toString()
-            if (query.isNotEmpty()) {
-                adapter.clearComponents()
-                viewModel.startSearch(query)
-            }
-        }
-
-        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-                if (viewModel.isLoading.value != true &&
-                    layoutManager.findLastVisibleItemPosition() >= adapter.itemCount - 1) {
-                    viewModel.loadPage()
-                }
-            }
-        })
-
-        // Observe LiveData for Parts
-        viewModel.newParts.observe(this, Observer { newItems ->
-            adapter.addComponents(newItems)
-        })
-
-        // Observe LiveData for loading state
-        viewModel.isLoading.observe(this, Observer { isLoading ->
-            // Display loading indicator
-            if (isLoading) {
-
-            }
-            else {
-
-            }
-        })
-
-        viewModel.errorMessage.observe(this, Observer { errorMessage ->
-            // Display error message
-            if (!errorMessage.isNullOrEmpty()) {
-                Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show()
-                viewModel.clearErrorMessage()
-            }
-        })
     }
 }
