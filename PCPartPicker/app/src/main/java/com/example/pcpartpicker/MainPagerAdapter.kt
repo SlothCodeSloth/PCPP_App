@@ -8,14 +8,14 @@ class MainPagerAdapter(
     fragmentActivity: FragmentActivity,
     private val listNames: List<String>
 )  : FragmentStateAdapter(fragmentActivity) {
-    override fun getItemCount(): Int = 1 + listNames.size
+    override fun getItemCount(): Int = 3
 
     override fun createFragment(position: Int): Fragment {
-        return if (position == 0) {
-            MainSearchFragment()
-        }
-        else {
-            ComponentListFragment.newInstance(listNames[position -1])
+        return when (position) {
+            0 -> SettingsFragment()
+            1 -> MainSearchFragment()
+            2 -> ListOverviewFragment()
+            else -> throw IndexOutOfBoundsException("Invalid Index")
         }
     }
 }

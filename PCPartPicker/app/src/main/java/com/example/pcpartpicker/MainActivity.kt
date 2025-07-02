@@ -14,6 +14,7 @@ import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import retrofit2.*
 import retrofit2.converter.gson.GsonConverterFactory
@@ -30,15 +31,32 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         viewPager = findViewById<ViewPager2>(R.id.viewPager)
-        val fab = findViewById<FloatingActionButton>(R.id.addListFab)
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNav)
 
         val listNames = mutableListOf("List 1", "List 2")
 
         val pagerAdapter = MainPagerAdapter(this, listNames)
         viewPager.adapter = pagerAdapter
+        viewPager.setCurrentItem(1, false)
+        bottomNav.selectedItemId = R.id.search
 
-        fab.setOnClickListener {
+        viewPager.registerOnPageChangeCallback(object: ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                when (position) {
+                    0 -> bottomNav.selectedItemId = R.id.settings
+                    1 -> bottomNav.selectedItemId = R.id.search
+                    2 -> bottomNav.selectedItemId = R.id.lists
+                }
+            }
+        })
 
+        bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.settings -> viewPager.setCurrentItem(0, true)
+                R.id.search -> viewPager.setCurrentItem(1, true)
+                R.id.lists -> viewPager.setCurrentItem(2, true)
+            }
+            true
         }
     }
 }
