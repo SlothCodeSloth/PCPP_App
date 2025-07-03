@@ -3,6 +3,8 @@ package com.example.pcpartpicker
 import android.os.Bundle
 import android.os.PersistableBundle
 import android.util.Log
+import android.view.View
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -14,6 +16,7 @@ class ComponentListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_component_list)
 
+        val emptyText = findViewById<TextView>(R.id.emptyTextView)
         val recyclerView = findViewById<RecyclerView>(R.id.componentRecyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
@@ -42,6 +45,7 @@ class ComponentListActivity : AppCompatActivity() {
                         )
                     }
                     adapter.addComponents(parts)
+                    emptyText.visibility = if (parts.isEmpty()) View.VISIBLE else View.GONE
                 }
             }
         }

@@ -52,6 +52,7 @@ class ListOverviewFragment : Fragment() {
                 Toast.makeText(context, "List \"$listName\" created", Toast.LENGTH_SHORT).show()
             }
         }
+        dialog.show()
     }
 
     private fun loadLists() {

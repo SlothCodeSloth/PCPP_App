@@ -10,6 +10,7 @@ import android.widget.ImageView
 import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -43,6 +44,7 @@ class DetailActivity : AppCompatActivity() {
         val detailLink: Button = findViewById(R.id.detailLink)
         //val detailSpecs: TextView = findViewById(R.id.specs)
         val specTable: TableLayout = findViewById(R.id.specTable)
+        val listButton = findViewById<Button>(R.id.listButton)
         specTable.removeAllViews()
 
         // Get Data from Main Activity (Intent)
@@ -95,7 +97,41 @@ class DetailActivity : AppCompatActivity() {
             }
         }
 
-        // TODO - Add to List Button
+        listButton.setOnClickListener {
+            val dao = (application as MyApplication).database.componentDao()
+            lifecycleScope.launch {
+                val allLists = dao.getAllListsWithComponents()
+                val listNames = allLists.map { it.list.name }
+
+                if (listNames.isEmpty()) {
+                    Toast.makeText(this@DetailActivity, "No lists found.", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+
+                SelectListDialog(this@DetailActivity, listNames) { selectedListName ->
+                    val matchedList = allLists.find { it.list.name == selectedListName }
+                    if (matchedList == null) {
+                        Toast.makeText(this@DetailActivity, "Selected list not found.", Toast.LENGTH_SHORT).show()
+                        return@SelectListDialog
+                    }
+
+
+                    lifecycleScope.launch {
+                        val componentEntity = ComponentEntity(
+                            url = url!!,
+                            name = name ?: "Unknown",
+                            price = price ?: "N/A",
+                            image = image
+                        )
+
+                        dao.insertComponent(componentEntity)
+                        dao.insertCrossRef(ListComponentCrossRef(matchedList.list.id, url))
+
+                        Toast.makeText(this@DetailActivity, "Added to \"$selectedListName\"", Toast.LENGTH_SHORT).show()
+                    }
+                }.show()
+            }
+        }
     }
 
     companion object {

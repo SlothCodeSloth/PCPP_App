@@ -31,54 +31,6 @@ class PartViewModel(private val api: PyPartPickerApi) : ViewModel() {
     private var totalPages: Int = 1
     private val pageSize: Int = 5
 
-    // Search for parts
-    fun searchParts(query: String) {
-        // Reset the page if it is a new search
-        if (query != currentQuery) {
-            currentQuery = query
-            currentPage = 1
-            _parts.value = emptyList()
-        }
-        if (currentPage > totalPages) {
-            return
-        }
-
-        _isLoading.value = true
-        viewModelScope.launch {
-            try {
-                val response = api.searchParts(
-                    query = currentQuery,
-                    limit = pageSize,
-                    page = currentPage
-                )
-
-                totalPages = response.total_pages
-                val newParts = response.results.map { part ->
-                    Component.Part(
-                        name = part.name,
-                        url = part.url,
-                        price = part.price?.toString() ?: "N/A",
-                        image = part.image
-                    )
-                }
-
-                if (currentPage == 1) {
-                    _parts.value = newParts
-                } else {
-                    val currentList = _parts.value?.toMutableList() ?: mutableListOf()
-                    currentList.addAll(newParts)
-                    _parts.value = currentList
-                }
-                currentPage++
-
-            } catch (e: Exception) {
-                _errorMessage.value = "Faled to load data: ${e.message}"
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
     // Start a new search
     fun startSearch(query: String) {
         if (query != currentQuery) {
@@ -126,12 +78,6 @@ class PartViewModel(private val api: PyPartPickerApi) : ViewModel() {
                 _isLoading.value = false
             }
         }
-    }
-
-    // Load next page
-    fun loadNextPage() {
-        if (_isLoading.value == true || currentPage > totalPages) return
-        //searchParts(currentQuery)
     }
 
     // Fetch product details
