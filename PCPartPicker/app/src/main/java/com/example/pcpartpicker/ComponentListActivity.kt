@@ -5,6 +5,7 @@ import android.os.PersistableBundle
 import android.util.Log
 import android.view.View
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -20,10 +21,45 @@ class ComponentListActivity : AppCompatActivity() {
         val recyclerView = findViewById<RecyclerView>(R.id.componentRecyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
-        val adapter = ComponentAdapter(mutableListOf()) { part ->
-            val intent = DetailActivity.newIntent(this, part)
-            startActivity(intent)
-        }
+        val adapter = ComponentAdapter(
+            mutableListOf(),
+            onItemClick = { part ->
+                val intent = DetailActivity.newIntent(this, part)
+                startActivity(intent)
+            },
+            onAddClick = { selectedProduct ->
+                val dao = (application as MyApplication).database.componentDao()
+                lifecycleScope.launch {
+                    val allLists = dao.getAllListsWithComponents()
+                    val listNames = allLists.map { it.list.name }
+                    if (listNames.isEmpty()) {
+                        Toast.makeText(this@ComponentListActivity, "No Lists Found", Toast.LENGTH_SHORT).show()
+                        return@launch
+                    }
+
+                    SelectListDialog(this@ComponentListActivity, listNames) { selectedListName ->
+                        val matchedList = allLists.find { it.list.name == selectedListName }
+                        if (matchedList == null) {
+                            Toast.makeText(this@ComponentListActivity, "List Not Found", Toast.LENGTH_SHORT).show()
+                            return@SelectListDialog
+                        }
+
+                        val componentEntity = ComponentEntity(
+                            url = selectedProduct.url,
+                            name = selectedProduct.name ?: "Unknown",
+                            price = selectedProduct.price ?: "N/A",
+                            image = selectedProduct.image
+                        )
+
+                        lifecycleScope.launch {
+                            dao.insertComponent(componentEntity)
+                            dao.insertCrossRef(ListComponentCrossRef(matchedList.list.id, selectedProduct.url))
+                            Toast.makeText(this@ComponentListActivity, "Added to \"$selectedListName\"", Toast.LENGTH_SHORT).show()
+                        }
+                    }.show()
+                }
+            }
+        )
 
         recyclerView.adapter = adapter
 

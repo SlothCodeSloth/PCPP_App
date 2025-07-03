@@ -10,12 +10,14 @@ import com.bumptech.glide.Glide
 
 class ComponentAdapter (
     private val products: MutableList<Component.Part>,
-    private val onItemClick: (Component.Part) -> Unit)
+    private val onItemClick: (Component.Part) -> Unit,
+    private val onAddClick: (Component.Part) -> Unit)
     : RecyclerView.Adapter<ComponentAdapter.ProductViewHolder>() {
         class ProductViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
             val productImage: ImageView = itemView.findViewById(R.id.componentImage)
             val productName: TextView = itemView.findViewById(R.id.componentName)
             val productPrice: TextView = itemView.findViewById(R.id.componentPrice)
+            val addButton: View = itemView.findViewById(R.id.componentButton)
         }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProductViewHolder {
@@ -36,6 +38,10 @@ class ComponentAdapter (
         // Click Listener
         holder.itemView.setOnClickListener {
             onItemClick(product)
+        }
+
+        holder.addButton.setOnClickListener {
+            onAddClick(product)
         }
     }
 

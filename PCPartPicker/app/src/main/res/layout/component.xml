@@ -49,5 +49,17 @@ android:gravity="center_vertical">
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:text="Add to\nList"
-    android:maxLines="2"/>
+    android:clickable="true"
+    android:focusable="true"
+    android:maxLines="2"
+    android:visibility="visible"/>
+<TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:id="@+id/componentPriceAlt"
+    android:textSize="14dp"
+    android:text="Price"
+    android:textColor="#555555"
+    android:visibility="gone"
+    />
 </LinearLayout>
