@@ -20,4 +20,13 @@ interface ComponentDao {
     @Transaction
     @Query("SELECT * FROM lists WHERE id = :listId")
     suspend fun getListWithComponents(listId: Int): ListWithComponents
+
+    @Query("DELETE FROM ListComponentCrossRef WHERE listId = :listId AND componentUrl = :componentUrl")
+    suspend fun deleteCrossRef(listId: Int, componentUrl: String)
+
+    @Query("SELECT COUNT(*) FROM ListComponentCrossRef WHERE componentUrl = :url")
+    suspend fun getListCountForComponent(url: String): Int
+
+    @Query("DELETE FROM components WHERE url = :url")
+    suspend fun deleteComponent(url: String)
 }

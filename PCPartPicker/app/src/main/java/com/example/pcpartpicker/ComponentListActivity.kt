@@ -8,17 +8,22 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.launch
 
 class ComponentListActivity : AppCompatActivity() {
+
+    private lateinit var listName: String
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_component_list)
 
         val emptyText = findViewById<TextView>(R.id.emptyTextView)
         val recyclerView = findViewById<RecyclerView>(R.id.componentRecyclerView)
+        listName = intent.getStringExtra("list_name") ?: ""
         recyclerView.layoutManager = LinearLayoutManager(this)
 
         val adapter = ComponentAdapter(
@@ -58,9 +63,47 @@ class ComponentListActivity : AppCompatActivity() {
                         }
                     }.show()
                 }
-            }
+            },
+            showButton = false
         )
 
+        // New
+        val itemTouchHelper = ItemTouchHelper(object: ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                return false
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.adapterPosition
+                val part = adapter.getComponentAt(position)
+
+                val dao = (application as MyApplication).database.componentDao()
+                lifecycleScope.launch {
+                    val allLists = dao.getAllListsWithComponents()
+                    val matchedList = allLists.find { it.list.name == listName }
+
+                    matchedList?.let {
+                        // Delete the cross reference
+                        dao.deleteCrossRef(matchedList.list.id, part.url)
+
+                        // Delete the component if it is not in any other list
+                        val usageCount = dao.getListCountForComponent(part.url)
+                        if (usageCount == 0) {
+                            dao.deleteComponent(part.url)
+                        }
+
+                        adapter.removeComponentAt(position)
+                        Toast.makeText(this@ComponentListActivity, "Component removed from list", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        })
+
+        itemTouchHelper.attachToRecyclerView(recyclerView)
         recyclerView.adapter = adapter
 
         val listName = intent.getStringExtra("list_name")

@@ -43,7 +43,6 @@ android:gravity="center_vertical">
 
 </LinearLayout>
 
-<!-- Button on the right -->
 <Button
     android:id="@+id/componentButton"
     android:layout_width="wrap_content"
