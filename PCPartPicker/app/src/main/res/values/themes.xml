@@ -1,9 +1,42 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.PCPartPicker" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="colorSurface">@color/background_lightPicker</item>
+        <item name="colorSurfaceContainerHigh">@color/textBackground_lightPicker</item>
+        <item name="colorSurfaceContainerLow">@color/card_lightPicker</item>
+        <item name="colorOnSurface">@color/text_lightPicker</item>
+        <item name="colorOnSurfaceVariant">@color/header_lightPicker</item>
+        <item name="colorOnSurfaceInverse">@color/textHeader_lightPicker</item>
+        <item name="colorPrimary">@color/header_lightPicker</item>
+        <item name="colorSecondary">@color/button_lightPicker</item>
+        <item name="colorSecondaryContainer">@color/itemSelected_lightPicker</item>
     </style>
-
     <style name="Theme.PCPartPicker" parent="Base.Theme.PCPartPicker" />
+
+    <style name="Base.Theme.Default2" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorSurface">@color/background_lightAndroid</item>
+        <item name="colorSurfaceContainerHigh">@color/textBackground_lightAndroid</item>
+        <item name="colorSurfaceContainerLow">@color/card_lightAndroid</item>
+        <item name="colorOnSurface">@color/text_lightPicker</item>
+        <item name="colorOnSurfaceVariant">@color/header_lightAndroid</item>
+        <item name="colorOnSurfaceInverse">@color/textHeader_lightPicker</item>
+        <item name="colorPrimary">@color/header_lightPicker</item>
+        <item name="colorSecondary">@color/button_lightPicker</item>
+        <item name="colorSecondaryContainer">@color/itemSelected_lightPicker</item>
+    </style>
+    <style name="Theme.Default2" parent="Base.Theme.Default" />
+
+
+    <style name="Base.Theme.Default" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorSurface">@color/background_lightAndroid</item>
+        <item name="colorSurfaceContainerHigh">@color/textBackground_lightAndroid</item>
+        <item name="colorSurfaceContainerLow">@color/card_lightAndroid</item>
+        <item name="colorOnSurface">@color/text_lightPicker</item>
+        <item name="colorOnSurfaceVariant">@color/header_lightAndroid</item>
+        <item name="colorOnSurfaceInverse">@color/textHeader_lightPicker</item>
+        <item name="colorPrimary">@color/header_lightPicker</item>
+        <item name="colorSecondary">@color/button_lightPicker</item>
+        <item name="colorSecondaryContainer">@color/itemSelected_lightPicker</item>
+    </style>
+    <style name="Theme.Default" parent="Base.Theme.Default" />
 </resources>

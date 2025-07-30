@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ListView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -44,10 +45,10 @@ class ListOverviewFragment : Fragment() {
 
     private fun showCreateListDialog() {
         val context = requireContext()
-        val dialog = CreateListDialog(context) { listName ->
+        val dialog = CreateListDialog(context) { listName, iconId ->
             val dao = (requireActivity().application as MyApplication).database.componentDao()
             lifecycleScope.launch {
-                dao.insertList(ListEntity(name = listName))
+                dao.insertList(ListEntity(name = listName, iconResId = iconId))
                 loadLists()
                 Toast.makeText(context, "List \"$listName\" created", Toast.LENGTH_SHORT).show()
             }

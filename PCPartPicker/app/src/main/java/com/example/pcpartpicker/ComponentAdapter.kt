@@ -81,5 +81,7 @@ class ComponentAdapter (
         products.removeAt(position)
         notifyItemRemoved(position)
     }
+
+    fun getAllComponents(): List<Component.Part> = products
 }
 

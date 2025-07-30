@@ -31,7 +31,8 @@ android:gravity="center_vertical">
         android:textSize="16sp"
         android:textStyle="bold"
         android:maxLines="2"
-        android:ellipsize="end" />
+        android:ellipsize="end"
+        android:paddingEnd="8dp"/>
 
     <TextView
         android:id="@+id/componentPrice"
@@ -51,13 +52,15 @@ android:gravity="center_vertical">
     android:clickable="true"
     android:focusable="true"
     android:maxLines="2"
-    android:visibility="visible"/>
+    android:visibility="visible"
+    android:backgroundTint="?attr/colorSecondary"/>
 <TextView
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:id="@+id/componentPriceAlt"
     android:textSize="14dp"
     android:text="Price"
+    android:textStyle="bold"
     android:textColor="#555555"
     android:visibility="gone"
     />

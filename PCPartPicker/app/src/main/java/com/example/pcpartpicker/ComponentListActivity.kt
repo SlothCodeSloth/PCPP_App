@@ -12,10 +12,12 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.launch
+import org.w3c.dom.Text
 
 class ComponentListActivity : AppCompatActivity() {
 
     private lateinit var listName: String
+    private lateinit var adapter: ComponentAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,9 +26,11 @@ class ComponentListActivity : AppCompatActivity() {
         val emptyText = findViewById<TextView>(R.id.emptyTextView)
         val recyclerView = findViewById<RecyclerView>(R.id.componentRecyclerView)
         listName = intent.getStringExtra("list_name") ?: ""
+        val listTitle = findViewById<TextView>(R.id.listTitleTextView)
+        listTitle.text = listName ?: "List"
         recyclerView.layoutManager = LinearLayoutManager(this)
 
-        val adapter = ComponentAdapter(
+        adapter = ComponentAdapter(
             mutableListOf(),
             onItemClick = { part ->
                 val intent = DetailActivity.newIntent(this, part)
@@ -97,6 +101,7 @@ class ComponentListActivity : AppCompatActivity() {
                         }
 
                         adapter.removeComponentAt(position)
+                        updateTotalPrice()
                         Toast.makeText(this@ComponentListActivity, "Component removed from list", Toast.LENGTH_SHORT).show()
                     }
                 }
@@ -125,11 +130,27 @@ class ComponentListActivity : AppCompatActivity() {
                     }
                     adapter.addComponents(parts)
                     emptyText.visibility = if (parts.isEmpty()) View.VISIBLE else View.GONE
+
+                    // Show Total Price of List
+                    val totalPriceText = findViewById<TextView>(R.id.priceTextView)
+                    val total = parts.sumOf { part ->
+                        part.price.replace(Regex("[^\\d.]"), "").toDoubleOrNull() ?: 0.0
+                    }
+
+                    totalPriceText.text = "Total: $%.2f".format(total)
                 }
             }
         }
         else {
             Log.e("ComponentListActivity", "No list_name provided in intent.")
         }
+    }
+
+    private fun updateTotalPrice() {
+        val totalPrice = findViewById<TextView>(R.id.priceTextView)
+        val total = adapter.getAllComponents().sumOf {
+            it.price.replace(Regex("[^\\d.]"), "").toDoubleOrNull() ?: 0.0
+        }
+        totalPrice.text = "Total: $%.2f".format(total)
     }
 }

@@ -4,6 +4,12 @@ import androidx.room.*
 
 @Dao
 interface ComponentDao {
+    @Transaction
+    suspend fun deleteListAndCrossRefs(listId: Int) {
+        deleteCrossRefsForList(listId)
+        deleteListById(listId)
+    }
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertComponent(componentEntity: ComponentEntity)
 
@@ -29,4 +35,12 @@ interface ComponentDao {
 
     @Query("DELETE FROM components WHERE url = :url")
     suspend fun deleteComponent(url: String)
+
+    @Query("DELETE FROM lists WHERE id = :listId")
+    suspend fun deleteListById(listId: Int)
+
+    @Query("DELETE FROM ListComponentCrossRef WHERE listId = :listId")
+    suspend fun deleteCrossRefsForList(listId: Int)
+
+    
 }
