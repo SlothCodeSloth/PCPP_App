@@ -38,4 +38,8 @@ class ListAdapter(
         lists.addAll(newLists)
         notifyDataSetChanged()
     }
+
+    fun getListAt(position: Int): ListEntity {
+        return lists[position]
+    }
 }

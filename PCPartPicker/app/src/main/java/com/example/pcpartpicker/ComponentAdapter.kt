@@ -30,9 +30,12 @@ class ComponentAdapter (
 
     override fun onBindViewHolder(holder: ProductViewHolder, position: Int) {
         val product = products[position]
+        var currencySymbol = SettingsDataManager.getCurrencySymbol(holder.itemView.context)
+        currencySymbol += product.price
+
         holder.productName.text = product.name
-        holder.productPrice.text = product.price
-        holder.priceAlt.text = product.price
+        holder.productPrice.text = currencySymbol
+        holder.priceAlt.text = currencySymbol
         Glide.with(holder.itemView.context)
             .load(product.image)
             .placeholder(R.drawable.ic_launcher_background)

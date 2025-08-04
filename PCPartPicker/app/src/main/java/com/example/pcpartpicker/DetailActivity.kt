@@ -53,9 +53,13 @@ class DetailActivity : AppCompatActivity() {
         val image = intent.getStringExtra("product_image")
         val url = intent.getStringExtra("product_url")
 
+        // Get Currency Data
+        var currency = SettingsDataManager.getCurrencySymbol(this)
+        currency += price
+
         // Apply data to attributes
         detailName.text = name
-        detailPrice.text = "$$price"
+        detailPrice.text = currency
         Glide.with(this)
             .load(image)
             .placeholder(R.drawable.ic_launcher_background)

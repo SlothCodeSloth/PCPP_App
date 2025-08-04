@@ -1,5 +1,6 @@
 package com.example.pcpartpicker
 
+import android.content.Context
 import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -30,30 +31,44 @@ class PartViewModel(private val api: PyPartPickerApi) : ViewModel() {
     private var currentPage: Int = 1
     private var totalPages: Int = 1
     private val pageSize: Int = 5
+    private var currentProductType: String? = null
 
     // Start a new search
-    fun startSearch(query: String) {
-        if (query != currentQuery) {
+    fun startSearch(query: String, productType: String?, context: Context) {
+        if (query != currentQuery || productType != currentProductType) {
             currentQuery = query
+            currentProductType = productType
             currentPage = 1
             totalPages = 1
             _parts.value = emptyList()
-            loadPage()
+            loadPage(context)
         }
     }
 
     // Load in new pages
-    fun loadPage() {
+    fun loadPage(context: Context) {
         if (_isLoading.value == true || currentPage > totalPages) return
 
         _isLoading.value = true
         viewModelScope.launch {
             try {
-                val response = api.searchParts(
-                    query = currentQuery,
-                    limit = pageSize,
-                    page = currentPage
-                )
+                val regionCode = SettingsDataManager.getRegionCode(context)
+                val response =  if (currentProductType != null) {
+                    api.getPartsByCategory(
+                        product_type = currentProductType!!,
+                        limit = pageSize,
+                        page = currentPage,
+                        region = regionCode
+                    )
+                }
+                else {
+                    api.searchParts(
+                        query = currentQuery,
+                        limit = pageSize,
+                        page = currentPage,
+                        region = regionCode
+                    )
+                }
 
                 totalPages = response.total_pages
                 val newParts = response.results.map { part ->

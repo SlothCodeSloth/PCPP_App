@@ -31,7 +31,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:menu="@menu/bottom_nav_bar"
-        android:backgroundTint="?attr/colorOnSurfaceVariant" />
+        app:itemIconTint="@color/bottom_nav_item"/>
     <!-- android:backgroundTint="?attr/colorSurfaceContainerHigh" -->
     <!-- <item name="colorSecondaryContainer">@color/header_lightPicker</item> -->
 

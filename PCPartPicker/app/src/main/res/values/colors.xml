@@ -33,7 +33,8 @@
     <color name="background_lightAndroid">#f3f0f3</color>
     <color name="card_lightAndroid">#fdfdfd</color>
     <color name="textBackground_lightAndroid">#fdfdfd</color>
-    <color name="button_lightAndroid">#fdfdfd</color>
-
-
+    <color name="button_lightAndroid">#6750a4</color>
+    <color name="text_lightAndroid">#191b2a</color>
+    <color name="textHeader_lightAndroid">#2f2f2f</color>
+    <color name="itemSelected_lightAndroid">#c19ce9</color>
 </resources>

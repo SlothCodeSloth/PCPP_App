@@ -31,12 +31,23 @@
         <item name="colorSurface">@color/background_lightAndroid</item>
         <item name="colorSurfaceContainerHigh">@color/textBackground_lightAndroid</item>
         <item name="colorSurfaceContainerLow">@color/card_lightAndroid</item>
-        <item name="colorOnSurface">@color/text_lightPicker</item>
+        <item name="colorOnSurface">@color/text_lightAndroid</item>
         <item name="colorOnSurfaceVariant">@color/header_lightAndroid</item>
-        <item name="colorOnSurfaceInverse">@color/textHeader_lightPicker</item>
-        <item name="colorPrimary">@color/header_lightPicker</item>
-        <item name="colorSecondary">@color/button_lightPicker</item>
-        <item name="colorSecondaryContainer">@color/itemSelected_lightPicker</item>
+        <item name="colorOnSurfaceInverse">@color/textHeader_lightAndroid</item>
+        <item name="colorPrimary">@color/header_lightAndroid</item>
+        <item name="colorSecondary">@color/button_lightAndroid</item>
+        <item name="colorSecondaryContainer">@color/itemSelected_lightAndroid</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
     </style>
     <style name="Theme.Default" parent="Base.Theme.Default" />
+
+
+    <style name="RoundCornerDialog" parent="Theme.Material3.DayNight.Dialog" >
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowFrame">@null</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+    </style>
+
 </resources>

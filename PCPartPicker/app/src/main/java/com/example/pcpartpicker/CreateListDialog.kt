@@ -1,7 +1,10 @@
 package com.example.pcpartpicker
 
 import android.content.Context
+import android.util.DisplayMetrics
 import android.view.LayoutInflater
+import android.view.ViewGroup
+import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -56,16 +59,29 @@ class CreateListDialog (
             iconContainer.addView(imageView)
         }
 
-        AlertDialog.Builder(context)
-            .setTitle("Create New List")
+        val dialog = AlertDialog.Builder(context, R.style.RoundCornerDialog)
             .setView(view)
-            .setPositiveButton("Create") {_, _ ->
-                val name = input.text.toString()
-                if (name.isNotBlank()) {
-                    onListCreated(name, selectedIconId)
-                }
-            }
-            .setNegativeButton("Cancel", null)
             .show()
+        val createButton = view.findViewById<Button>(R.id.confirm_button)
+        val cancelButton = view.findViewById<Button>(R.id.cancel_button)
+
+        createButton.setOnClickListener {
+            val name = input.text.toString()
+            if (name.isNotBlank()) {
+                onListCreated(name, selectedIconId)
+            }
+            dialog.dismiss()
+        }
+
+        cancelButton.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        val displayMetrics = DisplayMetrics()
+        (context as? android.app.Activity)?.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
+        val screenWidth = displayMetrics.widthPixels
+        val desiredWidth = (screenWidth * 0.9).toInt()
+
+        dialog.window?.setLayout(desiredWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
     }
 }

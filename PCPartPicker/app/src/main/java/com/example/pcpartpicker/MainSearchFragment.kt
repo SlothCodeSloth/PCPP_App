@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
@@ -22,6 +23,34 @@ class MainSearchFragment : Fragment() {
 
     private lateinit var adapter: ComponentAdapter
 
+    private val productTypes = mapOf(
+        "All" to "null",
+        "Keyboard" to "keyboard",
+        "Speaker" to "speaker",
+        "Monitor" to "monitor",
+        "Thermal Paste" to "thermal-paste",
+        "Video Card" to "video-card",
+        "Case Fan" to "case-fan",
+        "OS" to "os",
+        "CPU Cooler" to "cpu-cooler",
+        "Fan Controller" to "fan-controller",
+        "UPS" to "ups",
+        "Wired Network Card" to "wired-network-card",
+        "Memory" to "memory",
+        "Headphones" to "headphones",
+        "Sound Card" to "sound-card",
+        "Internal Hard Drive" to "internal-hard-drive",
+        "Mouse" to "mouse",
+        "Wireless Network Card" to "wireless-network-card",
+        "Power Supply" to "power-supply",
+        "Webcam" to "Webcam",
+        "Motherboard" to "motherboard",
+        "External Hard Drive" to "external-hard-drive",
+        "Optical Drive" to "optical-drive",
+        "Case" to "case",
+        "CPU" to "cpu"
+    )
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -30,6 +59,7 @@ class MainSearchFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_main_search, container, false)
         val searchText = view.findViewById<EditText>(R.id.searchText)
         val searchButton = view.findViewById<Button>(R.id.searchButton)
+        val filterButton = view.findViewById<Button>(R.id.filterButton)
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerView)
 
         adapter = ComponentAdapter(
@@ -79,8 +109,12 @@ class MainSearchFragment : Fragment() {
             val query = searchText.text.toString()
             if (query.isNotEmpty()) {
                 adapter.clearComponents()
-                viewModel.startSearch(query)
+                viewModel.startSearch(query, null, requireContext())
             }
+        }
+
+        filterButton.setOnClickListener {
+            showFilterDialog()
         }
 
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -89,7 +123,7 @@ class MainSearchFragment : Fragment() {
                 val layoutManager = recyclerView.layoutManager as LinearLayoutManager
                 if (viewModel.isLoading.value != true &&
                     layoutManager.findLastVisibleItemPosition() >= adapter.itemCount - 1) {
-                    viewModel.loadPage()
+                    viewModel.loadPage(requireContext())
                 }
             }
         })
@@ -99,6 +133,24 @@ class MainSearchFragment : Fragment() {
         })
 
         return view
+    }
+
+    private fun showFilterDialog() {
+        val filterNames = productTypes.keys.toTypedArray()
+        val query = requireView().findViewById<EditText>(R.id.searchText)?.text.toString()
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setTitle("Select a Product Category")
+            .setItems(filterNames) { dialog, which ->
+                val selectedFilterName = filterNames[which]
+                val selectedProductType = productTypes[selectedFilterName]
+
+                if (query.isNotEmpty()) {
+                    adapter.clearComponents()
+                    viewModel.startSearch(query, selectedProductType, requireContext())
+                }
+                Toast.makeText(requireContext(), "Filter set to: $selectedFilterName", Toast.LENGTH_SHORT).show()
+            }
+        builder.create().show()
     }
 }
 

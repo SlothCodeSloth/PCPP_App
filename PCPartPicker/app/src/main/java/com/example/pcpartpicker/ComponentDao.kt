@@ -42,5 +42,6 @@ interface ComponentDao {
     @Query("DELETE FROM ListComponentCrossRef WHERE listId = :listId")
     suspend fun deleteCrossRefsForList(listId: Int)
 
-    
+    @Query("SELECT * FROM lists WHERE name = :listName LIMIT 1")
+    suspend fun getListByName(listName: String): ListEntity?
 }

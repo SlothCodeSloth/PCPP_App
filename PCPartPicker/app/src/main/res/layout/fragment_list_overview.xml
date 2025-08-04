@@ -16,9 +16,22 @@
         android:textStyle="bold"
         android:id="@+id/yourListsTextView"
         android:paddingTop="8dp"
-        android:paddingBottom="8dp"
+        android:paddingBottom="16dp"
         android:background="?attr/colorOnSurfaceVariant"
         android:textColor="?attr/colorOnSurfaceInverse"/>
+
+    <TextView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/background_header"
+        android:gravity="center_horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/yourListsTextView"
+        android:layout_marginTop="-9dp"
+        android:layout_marginStart="-4dp"
+        android:layout_marginEnd="-4dp"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/listRecyclerView"

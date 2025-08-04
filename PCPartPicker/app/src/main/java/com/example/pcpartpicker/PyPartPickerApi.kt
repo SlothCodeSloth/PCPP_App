@@ -6,19 +6,16 @@ import retrofit2.http.Query
 
 interface PyPartPickerApi {
     @GET("/search")
-    /*
-    fun searchParts(
-        @Query("query") query: String,
-        @Query("limit") limit: Int,
-        @Query("region") region: String
-    ): Call<List<Component.Part>>
-
-    @GET("/product")
-    fun fetchProduct(@Query("url") url: String): Call<Component.Product>
-     */
-
     suspend fun searchParts(
         @Query("query") query: String,
+        @Query("limit") limit: Int,
+        @Query("page") page: Int = 1,
+        @Query("region") region: String = "us",
+    ): SearchResponse
+
+    @GET("/parts_by_type")
+    suspend fun getPartsByCategory(
+        @Query("product_type") product_type: String,
         @Query("limit") limit: Int,
         @Query("page") page: Int = 1,
         @Query("region") region: String = "us"
