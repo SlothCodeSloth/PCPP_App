@@ -10,7 +10,7 @@ interface ComponentDao {
         deleteListById(listId)
     }
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertComponent(componentEntity: ComponentEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -44,4 +44,10 @@ interface ComponentDao {
 
     @Query("SELECT * FROM lists WHERE name = :listName LIMIT 1")
     suspend fun getListByName(listName: String): ListEntity?
+
+    @Query("SELECT * FROM components WHERE url = :url")
+    suspend fun getComponentByUrl(url: String): ComponentEntity?
+
+    @Query("UPDATE components SET customPrice = :customPrice, customUrl = :customUrl, customVendor = :customVendor WHERE url = :componentUrl")
+    suspend fun updateComponentCustomData(componentUrl: String, customPrice: String?, customUrl: String?, customVendor: String?)
 }

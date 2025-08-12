@@ -5,7 +5,8 @@ class Component {
         val name: String,
         val url: String,
         val price: String,
-        val image: String?
+        val image: String?,
+        val customPrice: String? = null
     )
 
     data class Product(

@@ -14,7 +14,9 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Spinner
+import android.widget.Switch
 import android.widget.Toast
+import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 
@@ -41,6 +43,7 @@ class SettingsFragment : Fragment() {
             "Denmark", "Finland", "France", "Germany", "Hungary", "Ireland", "Italy", "Netherlands",
             "New Zealand", "Norway", "Portugal", "Romania", "Saudi Arabia", "Slovakia", "Spain",
             "Sweden","United Kingdom", "United States")
+        val switch: SwitchCompat = view.findViewById(R.id.settingsSwitch)
 
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, regions)
         regionSpinner.adapter = adapter
@@ -48,7 +51,12 @@ class SettingsFragment : Fragment() {
         // Load Data
         nameEditText.setText(SettingsDataManager.getSavedName(requireContext()))
         val savedRegion = SettingsDataManager.getSavedRegion(requireContext())
+        val switchState = SettingsDataManager.getSavedSwitchState(requireContext())
         currentRegion = savedRegion
+        switch.isChecked = switchState
+        if (switch.isChecked) {
+            switch.setText("Enabled      ")
+        }
 
         val savedRegionPosition = regions.indexOf(savedRegion)
         if (savedRegionPosition != -1) {
@@ -104,6 +112,19 @@ class SettingsFragment : Fragment() {
         }
         selectedThemeIndex = ThemeManager.getSavedThemeIndex(requireContext())
         highlightSelectedTheme(themeContainer, selectedThemeIndex)
+
+        switch.setOnCheckedChangeListener{_, isChecked ->
+            if (isChecked) {
+                switch.setText("Enabled      ")
+                SettingsDataManager.saveSwitchState(requireContext(), true)
+            }
+            else {
+                switch.setText("Disabled     ")
+                SettingsDataManager.saveSwitchState(requireContext(), false)
+            }
+
+        }
+
         return view;
     }
 

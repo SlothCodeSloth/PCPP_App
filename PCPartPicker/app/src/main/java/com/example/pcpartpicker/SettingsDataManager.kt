@@ -8,6 +8,8 @@ object SettingsDataManager {
     private const val PREF_NAME_KEY = "user_name"
     private const val DEFAULT_REGION = "United States"
     private const val DEFAULT_NAME = ""
+    private const val PREF_SWITCH_STATE = "switch_state"
+    private const val DEFAULT_SWITCH_STATE = false
 
     private val regionToCurrencyMap = mapOf(
         "Australia" to "$",
@@ -81,6 +83,13 @@ object SettingsDataManager {
             .apply()
     }
 
+    fun saveSwitchState(context: Context, isChecked: Boolean) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+            .edit()
+            .putBoolean(PREF_SWITCH_STATE, isChecked)
+            .apply()
+    }
+
     fun getSavedName(context: Context): String {
         return PreferenceManager.getDefaultSharedPreferences(context)
             .getString(PREF_NAME_KEY, DEFAULT_NAME) ?: DEFAULT_NAME
@@ -96,4 +105,45 @@ object SettingsDataManager {
         val savedRegion = getSavedRegion(context)
         return regionToCodeMap[savedRegion] ?: "us"
     }
+
+    fun getSavedSwitchState(context: Context): Boolean {
+        return PreferenceManager.getDefaultSharedPreferences(context)
+            .getBoolean(PREF_SWITCH_STATE, DEFAULT_SWITCH_STATE) ?: DEFAULT_SWITCH_STATE
+    }
+
+    fun formatPrice(context: Context, price: String): String {
+        val currencySymbol = getCurrencySymbol(context)
+        return "$currencySymbol$price"
+    }
+
+    fun getDisplayPrice(context: Context, originalPrice: String, customPrice: String?): String {
+        val currencySymbol = getCurrencySymbol(context)
+        val useCustom = getSavedSwitchState(context) && !customPrice.isNullOrBlank()
+
+        return if (useCustom) {
+            "${currencySymbol}${customPrice} (${currencySymbol}${originalPrice})"
+        }
+        else {
+            "${currencySymbol}${originalPrice}"
+        }
+    }
+
+    fun getDisplayPriceForList(context: Context, originalPrice: String, customPrice: String?): String {
+        val currencySymbol = getCurrencySymbol(context)
+        val useCustom = getSavedSwitchState(context) && !customPrice.isNullOrBlank()
+
+        return if (useCustom && !customPrice.isNullOrEmpty()) {
+            "${currencySymbol}${customPrice}"
+        }
+        else {
+            "${currencySymbol}${originalPrice}"
+        }
+    }
+
+    fun getTotalPrice(context: Context, originalPrice: String, customPrice: String?): Double {
+        val useCustom = getSavedSwitchState(context) && !customPrice.isNullOrBlank()
+        val priceStr = if (useCustom) customPrice else originalPrice
+        return priceStr?.replace(Regex("[^\\d.]"), "")?.toDoubleOrNull() ?: 0.0
+    }
+
 }

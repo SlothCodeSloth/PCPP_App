@@ -33,7 +33,7 @@ class ComponentListActivity : AppCompatActivity() {
         adapter = ComponentAdapter(
             mutableListOf(),
             onItemClick = { part ->
-                val intent = DetailActivity.newIntent(this, part)
+                val intent = DetailActivity.newIntent(this, part, hideListButton = true)
                 startActivity(intent)
             },
             onAddClick = { selectedProduct ->
@@ -46,7 +46,7 @@ class ComponentListActivity : AppCompatActivity() {
                         return@launch
                     }
 
-                    SelectListDialog(this@ComponentListActivity, listNames) { selectedListName ->
+                    SelectListDialog(this@ComponentListActivity, listNames, "Select a List") { selectedListName ->
                         val matchedList = allLists.find { it.list.name == selectedListName }
                         if (matchedList == null) {
                             Toast.makeText(this@ComponentListActivity, "List Not Found", Toast.LENGTH_SHORT).show()
@@ -125,19 +125,14 @@ class ComponentListActivity : AppCompatActivity() {
                             name = it.name,
                             url = it.url,
                             price = it.price,
-                            image = it.image
+                            image = it.image,
+                            customPrice = it.customPrice
                         )
                     }
                     adapter.addComponents(parts)
                     emptyText.visibility = if (parts.isEmpty()) View.VISIBLE else View.GONE
 
-                    // Show Total Price of List
-                    val totalPriceText = findViewById<TextView>(R.id.priceTextView)
-                    val total = parts.sumOf { part ->
-                        part.price.replace(Regex("[^\\d.]"), "").toDoubleOrNull() ?: 0.0
-                    }
-
-                    totalPriceText.text = "Total: $%.2f".format(total)
+                    updateTotalPrice()
                 }
             }
         }
@@ -148,9 +143,11 @@ class ComponentListActivity : AppCompatActivity() {
 
     private fun updateTotalPrice() {
         val totalPrice = findViewById<TextView>(R.id.priceTextView)
-        val total = adapter.getAllComponents().sumOf {
-            it.price.replace(Regex("[^\\d.]"), "").toDoubleOrNull() ?: 0.0
+        val total = adapter.getAllComponents().sumOf { part ->
+            val priceStr = part.customPrice?.takeIf { it.isNotBlank() } ?: part.price
+            priceStr.replace(Regex("[^\\d.]"), "").toDoubleOrNull() ?: 0.0
         }
-        totalPrice.text = "Total: $%.2f".format(total)
+        val currencySymbol = SettingsDataManager.getCurrencySymbol(this)
+        totalPrice.text = "Total: %s%.2f".format(currencySymbol, total)
     }
 }

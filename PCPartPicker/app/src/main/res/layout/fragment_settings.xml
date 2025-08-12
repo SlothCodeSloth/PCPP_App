@@ -110,6 +110,29 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/themeLabel" />
+
+        <TextView
+            android:id="@+id/switchLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="36dp"
+            android:text="Advanced Settings"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="@id/themeContainer"
+            app:layout_constraintStart_toStartOf="@id/themeContainer"
+            app:layout_constraintTop_toBottomOf="@id/themeContainer" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/settingsSwitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Disabled     "
+            android:checked="false"
+            app:layout_constraintTop_toBottomOf="@id/switchLabel"
+            app:layout_constraintStart_toStartOf="@id/switchLabel"
+            app:layout_constraintEnd_toEndOf="@id/switchLabel"
+            android:layout_marginTop="12dp"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </ScrollView>

@@ -4,8 +4,16 @@ import android.content.Intent
 import android.graphics.Typeface
 import android.net.Uri
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.util.DisplayMetrics
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
+import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TableLayout
 import android.widget.TableRow
@@ -13,20 +21,11 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.setPadding
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.viewModelFactory
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.launch
-import org.w3c.dom.Text
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 
 class DetailActivity : AppCompatActivity() {
 
@@ -42,9 +41,10 @@ class DetailActivity : AppCompatActivity() {
         val detailName: TextView = findViewById(R.id.detailName)
         val detailPrice: TextView = findViewById(R.id.detailPrice)
         val detailLink: Button = findViewById(R.id.detailLink)
-        //val detailSpecs: TextView = findViewById(R.id.specs)
         val specTable: TableLayout = findViewById(R.id.specTable)
-        val listButton = findViewById<Button>(R.id.listButton)
+        val listButton: Button = findViewById(R.id.listButton)
+        val settingsButton: ImageButton = findViewById(R.id.settingsButton)
+        val customLinkButton: Button = findViewById(R.id.customLinkButton)
         specTable.removeAllViews()
 
         // Get Data from Main Activity (Intent)
@@ -52,14 +52,62 @@ class DetailActivity : AppCompatActivity() {
         val price = intent.getStringExtra("product_price")
         val image = intent.getStringExtra("product_image")
         val url = intent.getStringExtra("product_url")
+        val hideListButton = intent.getBooleanExtra(HIDE_LIST_BUTTON_KEY, false)
+        val settingsSwitch = SettingsDataManager.getSavedSwitchState(this)
+        val dao = (application as MyApplication).database.componentDao()
+        val currencySymbol = SettingsDataManager.getCurrencySymbol(this@DetailActivity)
 
-        // Get Currency Data
-        var currency = SettingsDataManager.getCurrencySymbol(this)
-        currency += price
+        lifecycleScope.launch {
+            val componentEntity = dao.getComponentByUrl(url ?: return@launch)
+            settingsButton.setOnClickListener {
+                val currentVendor = componentEntity?.customVendor
+                val currentPrice = componentEntity?.customPrice
+                val currentLink = componentEntity?.customUrl
+                showCustomDetailsDialog(currentPrice, currentLink, currentVendor) { newPrice, newLink, newVendor ->
+                    lifecycleScope.launch {
+                        dao.updateComponentCustomData(url, newPrice, newLink, newVendor)
+                        customLinkButton.text = newVendor ?: ""
+                        customLinkButton.tag = newLink ?: ""
 
-        // Apply data to attributes
+                        if (!newPrice.isNullOrEmpty()) {
+                            detailPrice.text = "${currencySymbol}${newPrice} (${currencySymbol}${price})"
+                        }
+                        else {
+                            detailPrice.text = "${currencySymbol}${price}"
+                        }
+                    }
+                }
+            }
+
+            componentEntity?.let {
+                if (hideListButton && settingsSwitch && !it.customPrice.isNullOrEmpty()) {
+                    detailPrice.text = "${currencySymbol}${it.customPrice} (${currencySymbol}${price})"
+                }
+                else {
+                    detailPrice.text = "${currencySymbol}${price}"
+                }
+                customLinkButton.text = it.customVendor ?: "View Store"
+                customLinkButton.tag = it.customUrl
+            }
+        }
+
+        if (hideListButton) {
+            listButton.visibility = View.GONE
+            if (settingsSwitch) {
+                settingsButton.visibility = View.VISIBLE
+                customLinkButton.visibility = View.VISIBLE
+            }
+            else {
+                settingsButton.visibility = View.GONE
+                customLinkButton.visibility = View.GONE
+            }
+        }
+        else {
+            listButton.visibility = View.VISIBLE
+        }
+
+
         detailName.text = name
-        detailPrice.text = currency
         Glide.with(this)
             .load(image)
             .placeholder(R.drawable.ic_launcher_background)
@@ -97,12 +145,10 @@ class DetailActivity : AppCompatActivity() {
             }
             catch (e: Exception) {
                 Log.e("DetailActivity", "Error fetching product details: ${e.message}")
-                //detailSpecs.text = "Failed to load specifications."
             }
         }
 
         listButton.setOnClickListener {
-            val dao = (application as MyApplication).database.componentDao()
             lifecycleScope.launch {
                 val allLists = dao.getAllListsWithComponents()
                 val listNames = allLists.map { it.list.name }
@@ -112,22 +158,21 @@ class DetailActivity : AppCompatActivity() {
                     return@launch
                 }
 
-                SelectListDialog(this@DetailActivity, listNames) { selectedListName ->
+                SelectListDialog(this@DetailActivity, listNames, "Select a List") { selectedListName ->
                     val matchedList = allLists.find { it.list.name == selectedListName }
                     if (matchedList == null) {
                         Toast.makeText(this@DetailActivity, "Selected list not found.", Toast.LENGTH_SHORT).show()
                         return@SelectListDialog
                     }
 
+                    val componentEntity = ComponentEntity(
+                        url = url!!,
+                        name = name ?: "Unknown",
+                        price = price ?: "N/A",
+                        image = image
+                    )
 
                     lifecycleScope.launch {
-                        val componentEntity = ComponentEntity(
-                            url = url!!,
-                            name = name ?: "Unknown",
-                            price = price ?: "N/A",
-                            image = image
-                        )
-
                         dao.insertComponent(componentEntity)
                         dao.insertCrossRef(ListComponentCrossRef(matchedList.list.id, url))
 
@@ -136,16 +181,87 @@ class DetailActivity : AppCompatActivity() {
                 }.show()
             }
         }
+
+        // Add clickable button
+        customLinkButton.setOnClickListener {
+            val link = it.tag as? String
+            if (!link.isNullOrEmpty()) {
+                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+                startActivity(browserIntent)
+            }
+            else {
+                Toast.makeText(this, "No custom link set.", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     companion object {
-        fun newIntent(context: android.content.Context, part: Component.Part): Intent {
+        private const val HIDE_LIST_BUTTON_KEY = "hide_list_button"
+
+        fun newIntent(context: android.content.Context, part: Component.Part, hideListButton: Boolean = false): Intent {
             return Intent(context, DetailActivity::class.java).apply {
                 putExtra("product_name", part.name)
                 putExtra("product_url", part.url)
                 putExtra("product_price", part.price)
                 putExtra("product_image", part.image)
+                putExtra(HIDE_LIST_BUTTON_KEY, hideListButton)
             }
         }
+    }
+
+    private fun showCustomDetailsDialog(currentCustomPrice: String?, currentCustomLink: String?, currentCustomVendor: String?, onSave: (String?, String?, String?) -> Unit) {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_create_custom, null)
+        val customVendor: EditText = dialogView.findViewById(R.id.customStoreTextView)
+        val customPrice : EditText = dialogView.findViewById(R.id.customPriceTextView)
+        val customLink: EditText = dialogView.findViewById(R.id.customURLTextView)
+        val saveButton: Button = dialogView.findViewById(R.id.saveButton)
+        val cancelButton: Button = dialogView.findViewById(R.id.cancelButton)
+
+        customVendor.setText(currentCustomVendor)
+        customPrice.setText(currentCustomPrice)
+        customLink.setText(currentCustomLink)
+
+        saveButton.isEnabled = false
+        val textWatcher = object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val priceFilled = customPrice.text.isNotEmpty()
+                val linkFilled = customLink.text.isNotEmpty()
+                saveButton.isEnabled = priceFilled && linkFilled
+            }
+
+            override fun afterTextChanged(s: Editable?) {
+            }
+        }
+
+        customVendor.addTextChangedListener(textWatcher)
+        customPrice.addTextChangedListener(textWatcher)
+        customLink.addTextChangedListener(textWatcher)
+
+        val dialog = AlertDialog.Builder(this, R.style.RoundCornerDialog)
+            .setView(dialogView)
+            .create()
+
+        saveButton.setOnClickListener {
+            val newVendor = customVendor.text.toString().ifEmpty { null }
+            val newPrice = customPrice.text.toString().ifEmpty { null }
+            val newLink = customLink.text.toString().ifEmpty { null }
+            onSave(newPrice, newLink, newVendor)
+            dialog.dismiss()
+        }
+
+        cancelButton.setOnClickListener {
+            dialog.dismiss()
+        }
+        dialog.show()
+
+        val displayMetrics = DisplayMetrics()
+        (this as? android.app.Activity)?.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
+        val screenWidth = displayMetrics.widthPixels
+        val desiredWidth = (screenWidth * 0.9).toInt()
+        dialog.window?.setLayout(desiredWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
     }
 }
