@@ -50,4 +50,18 @@ interface ComponentDao {
 
     @Query("UPDATE components SET customPrice = :customPrice, customUrl = :customUrl, customVendor = :customVendor WHERE url = :componentUrl")
     suspend fun updateComponentCustomData(componentUrl: String, customPrice: String?, customUrl: String?, customVendor: String?)
+
+    @Transaction
+    @Query("SELECT * FROM bundles WHERE listId = :listId")
+    suspend fun getBundlesForList(listId: Int): List<BundleWithComponents>
+
+    @Transaction
+    @Query("SELECT * FROM bundles WHERE bundleId = :bundleId")
+    suspend fun getBundleWithComponents(bundleId: Int): BundleWithComponents
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertBundle(bundle: BundleEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertBundleComponentCrossRef(ref: BundleComponentCrossRef)
 }

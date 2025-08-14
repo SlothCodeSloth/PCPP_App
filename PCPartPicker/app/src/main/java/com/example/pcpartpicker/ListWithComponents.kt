@@ -15,6 +15,15 @@ data class ListWithComponents(
             entityColumn = "componentUrl"
             )
     )
+    val components: List<ComponentEntity>,
 
-    val components: List<ComponentEntity>
-)
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "listId"
+    )
+    val bundles: List<BundleEntity>
+) {
+    fun toListItems(): List<ListItem> {
+        return components.map { ListItem.CompoonentItem(it) } + bundles.map { ListItem.BundleItem(it) }
+    }
+}

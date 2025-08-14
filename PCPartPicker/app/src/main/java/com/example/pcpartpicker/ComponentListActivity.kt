@@ -2,15 +2,24 @@ package com.example.pcpartpicker
 
 import android.os.Bundle
 import android.os.PersistableBundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.util.DisplayMetrics
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
+import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.launch
 import org.w3c.dom.Text
 
@@ -23,10 +32,11 @@ class ComponentListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_component_list)
 
-        val emptyText = findViewById<TextView>(R.id.emptyTextView)
-        val recyclerView = findViewById<RecyclerView>(R.id.componentRecyclerView)
+        val emptyText: TextView = findViewById(R.id.emptyTextView)
+        val recyclerView: RecyclerView = findViewById(R.id.componentRecyclerView)
+        val listTitle: TextView = findViewById(R.id.listTitleTextView)
+        val bundleButton: FloatingActionButton = findViewById(R.id.bundleButton)
         listName = intent.getStringExtra("list_name") ?: ""
-        val listTitle = findViewById<TextView>(R.id.listTitleTextView)
         listTitle.text = listName ?: "List"
         recyclerView.layoutManager = LinearLayoutManager(this)
 
@@ -139,6 +149,10 @@ class ComponentListActivity : AppCompatActivity() {
         else {
             Log.e("ComponentListActivity", "No list_name provided in intent.")
         }
+
+        bundleButton.setOnClickListener {
+            showCreateBundleDialog()
+        }
     }
 
     private fun updateTotalPrice() {
@@ -149,5 +163,124 @@ class ComponentListActivity : AppCompatActivity() {
         }
         val currencySymbol = SettingsDataManager.getCurrencySymbol(this)
         totalPrice.text = "Total: %s%.2f".format(currencySymbol, total)
+    }
+
+    private fun showCreateBundleDialog() {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_create_bundle, null)
+        val bundleName: EditText = dialogView.findViewById(R.id.bundleNameTextView)
+        val bundleVendor: EditText = dialogView.findViewById(R.id.bundleVendorTextView)
+        val bundlePrice: EditText = dialogView.findViewById(R.id.bundlePriceTextView)
+        val bundleUrl: EditText = dialogView.findViewById(R.id.bundleURLTextView)
+        val bundleImage: EditText = dialogView.findViewById(R.id.bundleImageTextView)
+        val saveButton: Button = dialogView.findViewById(R.id.saveButton)
+        val cancelButton: Button = dialogView.findViewById(R.id.cancelButton)
+
+        saveButton.isEnabled = false
+        val textWatcher = object : TextWatcher {
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+            }
+
+            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                val nameFilled = bundleName.text.isNotEmpty()
+                val priceFilled = bundlePrice.text.isNotEmpty()
+                val urlFilled = bundleUrl.text.isNotEmpty()
+                val vendorFilled = bundleVendor.text.isNotEmpty()
+                val imageFilled = bundleImage.text.isNotEmpty()
+                // Image is optional
+                saveButton.isEnabled = nameFilled && priceFilled && urlFilled && vendorFilled
+            }
+
+            override fun afterTextChanged(p0: Editable?) {
+            }
+        }
+
+        bundleName.addTextChangedListener(textWatcher)
+        bundleVendor.addTextChangedListener(textWatcher)
+        bundlePrice.addTextChangedListener(textWatcher)
+        bundleUrl.addTextChangedListener(textWatcher)
+        bundleImage.addTextChangedListener(textWatcher)
+
+        val dialog = AlertDialog.Builder(this, R.style.RoundCornerDialog)
+            .setView(dialogView)
+            .create()
+
+        saveButton.setOnClickListener {
+            val name = bundleName.text.toString()
+            val vendor = bundleVendor.text.toString()
+            val price = bundlePrice.text.toString()
+            val url = bundleUrl.text.toString()
+            val image = bundleImage.text.toString()
+
+            lifecycleScope.launch {
+                val dao = (application as MyApplication).database.bundleDao()
+                val listDao = (application as MyApplication).database.componentDao()
+
+                val allLists = listDao.getAllListsWithComponents()
+                val matchedList = allLists.find { it.list.name == listName }
+                if (matchedList == null) {
+                    Toast.makeText(this@ComponentListActivity, "List not found", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+
+                val newBundle = BundleEntity(
+                    name = name,
+                    listId = matchedList.list.id,
+                    vendor = vendor,
+                    price = price,
+                    url = url,
+                    image = image
+                )
+
+                val bundleId = dao.insert(newBundle)
+
+                showComponentSelectionDialog(matchedList.components) { selectedComponents ->
+                    lifecycleScope.launch {
+                        selectedComponents.forEach { component ->
+                            dao.insertCrossRef(BundleComponentCrossRef(bundleId.toInt(), component.url))
+                        }
+                        Toast.makeText(this@ComponentListActivity, "Bundle Created", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+
+        cancelButton.setOnClickListener {
+            dialog.dismiss()
+        }
+        dialog.show()
+
+        val displayMetrics = DisplayMetrics()
+        (this as? android.app.Activity)?.windowManager?.defaultDisplay?.getMetrics(displayMetrics)
+        val screenWidth = displayMetrics.widthPixels
+        val desiredWidth = (screenWidth * 0.9).toInt()
+        dialog.window?.setLayout(desiredWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
+
+    }
+
+    private fun showComponentSelectionDialog(components: List<ComponentEntity>, onConfirm: (List<ComponentEntity>) -> Unit) {
+        val dialogView = LayoutInflater.from(this)
+            .inflate(R.layout.dialog_select_components, null)
+        val recyclerView: RecyclerView = dialogView.findViewById(R.id.componentsRecyclerView)
+        val cancelButton: Button = dialogView.findViewById(R.id.cancelButton)
+        val saveButton: Button = dialogView.findViewById(R.id.saveButton)
+
+        val adapter = ComponentSelectAdapter(components)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.adapter = adapter
+
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .create()
+
+        saveButton.setOnClickListener {
+            onConfirm(adapter.selectedItems.toList())
+            dialog.dismiss()
+        }
+
+        cancelButton.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 }
