@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 import org.w3c.dom.Text
 
 class ComponentListActivity : AppCompatActivity() {
-
+// Maybe Remove List ID
     private lateinit var listName: String
     private lateinit var adapter: ComponentAdapter
     private lateinit var recyclerView: RecyclerView
