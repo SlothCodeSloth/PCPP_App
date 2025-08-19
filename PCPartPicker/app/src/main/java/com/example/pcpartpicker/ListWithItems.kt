@@ -4,7 +4,7 @@ import androidx.room.Embedded
 import androidx.room.Junction
 import androidx.room.Relation
 
-data class ListWithComponents(
+data class ListWithItems(
     @Embedded val list: ListEntity,
     @Relation(
         parentColumn = "id",
@@ -24,6 +24,6 @@ data class ListWithComponents(
     val bundles: List<BundleEntity>
 ) {
     fun toListItems(): List<ListItem> {
-        return components.map { ListItem.CompoonentItem(it) } + bundles.map { ListItem.BundleItem(it) }
+        return components.map { ListItem.ComponentItem(it) } + bundles.map { ListItem.BundleItem(it) }
     }
 }

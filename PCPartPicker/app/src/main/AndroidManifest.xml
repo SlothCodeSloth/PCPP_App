@@ -16,6 +16,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.PCPartPicker"
         tools:targetApi="31">
+        <activity android:name=".BundleActivity"
+            android:exported="false" />
         <activity
             android:name=".DetailActivity"
             android:exported="false" />

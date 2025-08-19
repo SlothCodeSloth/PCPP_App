@@ -4,7 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "bundles")
-class BundleEntity (
+data class BundleEntity (
     @PrimaryKey(autoGenerate = true) val bundleId: Int = 0,
     val vendor: String,
     val name: String,

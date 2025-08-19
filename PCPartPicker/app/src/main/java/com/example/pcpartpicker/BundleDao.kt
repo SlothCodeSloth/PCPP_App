@@ -17,6 +17,12 @@ interface BundleDao {
     @Delete
     suspend fun delete(bundle: BundleEntity)
 
+    @Query("SELECT * FROM bundles WHERE bundleId = :bundleId")
+    suspend fun getBundle(bundleId: Int): BundleEntity?
+
+    @Query("SELECT * FROM components")
+    suspend fun getAllComponents(): List<ComponentEntity>
+
     @Query("SELECT * FROM bundles WHERE listId = :listId")
     suspend fun getBundlesForList(listId: Int): List<BundleEntity>
 
@@ -24,9 +30,12 @@ interface BundleDao {
     suspend fun getAllBundles(): List<BundleEntity>
 
     @Transaction
-    @Query("SELECT * FROM bundles")
-    suspend fun getAllBundlesWithComponents(): List<BundleWithComponents>
+    @Query("SELECT * FROM bundles WHERE bundleId = :bundleId")
+    suspend fun getBundleWithComponents(bundleId: Int): BundleWithComponents?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCrossRef(crossRef: BundleComponentCrossRef)
+
+    @Query("SELECT COUNT(*) FROM BundleComponentCrossRef WHERE url = :url")
+    suspend fun getBundleCountForComponent(url: String): Int
 }

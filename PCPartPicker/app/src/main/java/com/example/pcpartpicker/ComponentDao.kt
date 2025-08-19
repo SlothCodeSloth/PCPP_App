@@ -1,5 +1,6 @@
 package com.example.pcpartpicker
 
+import androidx.lifecycle.LiveData
 import androidx.room.*
 
 @Dao
@@ -19,13 +20,24 @@ interface ComponentDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertCrossRef(crossRef: ListComponentCrossRef)
 
+    @Query("SELECT * FROM components")
+    suspend fun getAllComponents(): List<ComponentEntity>
+
     @Transaction
     @Query("SELECT * FROM lists")
-    suspend fun getAllListsWithComponents(): List<ListWithComponents>
+    suspend fun getAllListsWithComponents(): List<ListWithItems>
 
     @Transaction
     @Query("SELECT * FROM lists WHERE id = :listId")
-    suspend fun getListWithComponents(listId: Int): ListWithComponents
+    suspend fun getListWithComponents(listId: Int): ListWithItems
+
+    @Transaction
+    @Query("SELECT * FROM lists WHERE name = :listName")
+    suspend fun getListWithItems(listName: String): ListWithItems?
+
+    @Transaction
+    @Query("SELECT * FROM lists")
+    suspend fun getAllListsWithItems(): List<ListWithItems>
 
     @Query("DELETE FROM ListComponentCrossRef WHERE listId = :listId AND componentUrl = :componentUrl")
     suspend fun deleteCrossRef(listId: Int, componentUrl: String)
@@ -46,7 +58,7 @@ interface ComponentDao {
     suspend fun getListByName(listName: String): ListEntity?
 
     @Query("SELECT * FROM components WHERE url = :url")
-    suspend fun getComponentByUrl(url: String): ComponentEntity?
+    fun getComponentByUrl(url: String): LiveData<ComponentEntity?>
 
     @Query("UPDATE components SET customPrice = :customPrice, customUrl = :customUrl, customVendor = :customVendor WHERE url = :componentUrl")
     suspend fun updateComponentCustomData(componentUrl: String, customPrice: String?, customUrl: String?, customVendor: String?)

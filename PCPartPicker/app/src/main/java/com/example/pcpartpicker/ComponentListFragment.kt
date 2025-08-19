@@ -28,9 +28,14 @@ class ComponentListFragment : Fragment() {
 
         adapter = ComponentAdapter(
             mutableListOf(),
-            onItemClick = { part ->
-                val intent = DetailActivity.newIntent(requireContext(), part)
-                startActivity(intent)
+            onItemClick = { item ->
+                if (item is ListItem.ComponentItem) {
+                    val component = item.component
+                    val intent = DetailActivity.newIntent(requireContext(), component)
+                    startActivity(intent)
+                }
+                // val intent = DetailActivity.newIntent(requireContext(), part)
+                // startActivity(intent)
             },
             onAddClick = {
             },
@@ -58,7 +63,10 @@ class ComponentListFragment : Fragment() {
                         image = it.image
                     )
                 }
-                adapter.addComponents(parts)
+                //adapter.addComponents(parts)
+                componentEntities.forEach { component ->
+                    adapter.addComponents(component)
+                }
             }
         }
     }

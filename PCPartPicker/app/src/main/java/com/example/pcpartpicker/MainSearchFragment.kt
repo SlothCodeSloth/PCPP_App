@@ -93,11 +93,18 @@ class MainSearchFragment : Fragment() {
 
         adapter = ComponentAdapter(
             mutableListOf(),
-            onItemClick = { part ->
-                val intent = DetailActivity.newIntent(requireContext(), part)
-                startActivity(intent)
+            onItemClick = { item ->
+                if (item is ListItem.ComponentItem) {
+                    val component = item.component
+                    val intent = DetailActivity.newIntent(requireContext(), component)
+                    startActivity(intent)
+                }
+
             },
-            onAddClick = { selectedProduct ->
+            onAddClick = { item ->
+                if (item !is ListItem.ComponentItem) return@ComponentAdapter
+                val component = item.component
+
                 val dao = (requireActivity().application as MyApplication).database.componentDao()
                 viewLifecycleOwner.lifecycleScope.launch {
                     val allLists = dao.getAllListsWithComponents()
@@ -113,17 +120,18 @@ class MainSearchFragment : Fragment() {
                             Toast.makeText(requireContext(), "List Not Found", Toast.LENGTH_SHORT).show()
                             return@SelectListDialog
                         }
-
+                        /*
                         val componentEntity = ComponentEntity(
                             url = selectedProduct.url,
                             name = selectedProduct.name ?: "Unknown",
                             price = selectedProduct.price ?:"N/A?",
                             image = selectedProduct.image
                         )
+                         */
 
                         viewLifecycleOwner.lifecycleScope.launch {
-                            dao.insertComponent(componentEntity)
-                            dao.insertCrossRef(ListComponentCrossRef(matchedList.list.id, selectedProduct.url))
+                            dao.insertComponent(component)
+                            dao.insertCrossRef(ListComponentCrossRef(matchedList.list.id, component.url))
                             Toast.makeText(requireContext(), "Added to \"$selectedListName\"", Toast.LENGTH_SHORT).show()
                         }
                     }.show()
@@ -192,7 +200,16 @@ class MainSearchFragment : Fragment() {
         })
 
         viewModel.newParts.observe(viewLifecycleOwner, Observer { newItems ->
-            adapter.addComponents(newItems)
+            newItems.forEach { part ->
+                val entity = ComponentEntity(
+                    url = part.url,
+                    name = part.name,
+                    price = part.price,
+                    image = part.image,
+                    customPrice = part.customPrice
+                )
+                adapter.addComponents(entity)
+            }
         })
 
         return view

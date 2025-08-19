@@ -27,26 +27,46 @@ class ComponentListActivity : AppCompatActivity() {
 
     private lateinit var listName: String
     private lateinit var adapter: ComponentAdapter
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var emptyText: TextView
+    private var listId: Int = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_component_list)
 
-        val emptyText: TextView = findViewById(R.id.emptyTextView)
-        val recyclerView: RecyclerView = findViewById(R.id.componentRecyclerView)
+        emptyText = findViewById(R.id.emptyTextView)
+        recyclerView = findViewById(R.id.componentRecyclerView)
         val listTitle: TextView = findViewById(R.id.listTitleTextView)
         val bundleButton: FloatingActionButton = findViewById(R.id.bundleButton)
         listName = intent.getStringExtra("list_name") ?: ""
+        listId = intent.getIntExtra("list_id", -1)
         listTitle.text = listName ?: "List"
         recyclerView.layoutManager = LinearLayoutManager(this)
 
         adapter = ComponentAdapter(
             mutableListOf(),
-            onItemClick = { part ->
-                val intent = DetailActivity.newIntent(this, part, hideListButton = true)
-                startActivity(intent)
+            onItemClick = { item ->
+                when (item) {
+                    is ListItem.ComponentItem -> {
+                        val intent = DetailActivity.newIntent(this, item.component, hideListButton = true)
+                        startActivity(intent)
+                    }
+
+                    is ListItem.BundleItem -> {
+                        val intent = BundleActivity.newIntent(this, item.bundle).apply {
+                            putExtra("list_name", listName)
+                            putExtra("list_id", listId)
+                        }
+                        startActivity(intent)
+                    }
+                }
             },
-            onAddClick = { selectedProduct ->
+
+            onAddClick = { selectedItem ->
+                if (selectedItem !is ListItem.ComponentItem) return@ComponentAdapter
+                val selectedComponent = selectedItem.component
+
                 val dao = (application as MyApplication).database.componentDao()
                 lifecycleScope.launch {
                     val allLists = dao.getAllListsWithComponents()
@@ -63,16 +83,9 @@ class ComponentListActivity : AppCompatActivity() {
                             return@SelectListDialog
                         }
 
-                        val componentEntity = ComponentEntity(
-                            url = selectedProduct.url,
-                            name = selectedProduct.name ?: "Unknown",
-                            price = selectedProduct.price ?: "N/A",
-                            image = selectedProduct.image
-                        )
-
                         lifecycleScope.launch {
-                            dao.insertComponent(componentEntity)
-                            dao.insertCrossRef(ListComponentCrossRef(matchedList.list.id, selectedProduct.url))
+                            dao.insertComponent(selectedComponent)
+                            dao.insertCrossRef(ListComponentCrossRef(matchedList.list.id, selectedComponent.url))
                             Toast.makeText(this@ComponentListActivity, "Added to \"$selectedListName\"", Toast.LENGTH_SHORT).show()
                         }
                     }.show()
@@ -93,26 +106,57 @@ class ComponentListActivity : AppCompatActivity() {
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val position = viewHolder.adapterPosition
-                val part = adapter.getComponentAt(position)
+                val item = adapter.getItemAt(position)
 
-                val dao = (application as MyApplication).database.componentDao()
-                lifecycleScope.launch {
-                    val allLists = dao.getAllListsWithComponents()
-                    val matchedList = allLists.find { it.list.name == listName }
+                when (item) {
+                    is ListItem.ComponentItem -> {
+                        val component = item.component
+                        val dao = (application as MyApplication).database.componentDao()
+                        lifecycleScope.launch {
+                            val allLists = dao.getAllListsWithComponents()
+                            val matchedList = allLists.find { it.list.name == listName }
 
-                    matchedList?.let {
-                        // Delete the cross reference
-                        dao.deleteCrossRef(matchedList.list.id, part.url)
+                            matchedList?.let {
+                                // Delete Cross Reference
+                                dao.deleteCrossRef(matchedList.list.id, component.url)
 
-                        // Delete the component if it is not in any other list
-                        val usageCount = dao.getListCountForComponent(part.url)
-                        if (usageCount == 0) {
-                            dao.deleteComponent(part.url)
+                                // Delete Component if not in other lists
+                                val usageCount = dao.getListCountForComponent(component.url)
+                                if (usageCount == 0) {
+                                    dao.deleteComponent(component.url)
+                                }
+                                adapter.removeComponentAt(position)
+                                updateTotalPrice()
+                                Toast.makeText(this@ComponentListActivity, "Component removed from list", Toast.LENGTH_SHORT).show()
+                            }
                         }
+                    }
 
-                        adapter.removeComponentAt(position)
-                        updateTotalPrice()
-                        Toast.makeText(this@ComponentListActivity, "Component removed from list", Toast.LENGTH_SHORT).show()
+                    is ListItem.BundleItem -> {
+                        val bundle = item.bundle
+                        val bundleDao = (application as MyApplication).database.bundleDao()
+                        val componentDao = (application as MyApplication).database.componentDao()
+                        lifecycleScope.launch {
+                            // Delete the Bundle
+                            bundleDao.delete(bundle)
+
+                            // Delete Components in the bundle
+                            val componentsInBundle = bundleDao.getBundleWithComponents(bundle.bundleId)?.components ?: emptyList()
+                            componentsInBundle.forEach { componentEntity ->
+                                val listUsageCount = componentDao.getListCountForComponent(componentEntity.url)
+                                val bundleUsageCount = bundleDao.getBundleCountForComponent(componentEntity.url)
+
+                                if (listUsageCount == 0 && bundleUsageCount == 1) {
+                                    componentDao.deleteComponent(componentEntity.url)
+                                }
+                            }
+
+                            runOnUiThread {
+                                adapter.removeBundleAt(position)
+                                updateTotalPrice()
+                                Toast.makeText(this@ComponentListActivity, "Bundle removed from list", Toast.LENGTH_SHORT).show()
+                            }
+                        }
                     }
                 }
             }
@@ -139,7 +183,11 @@ class ComponentListActivity : AppCompatActivity() {
                             customPrice = it.customPrice
                         )
                     }
-                    adapter.addComponents(parts)
+
+                    components.forEach { componentEntity ->
+                        adapter.addComponents(componentEntity)
+                    }
+                    // adapter.addComponents(parts)
                     emptyText.visibility = if (parts.isEmpty()) View.VISIBLE else View.GONE
 
                     updateTotalPrice()
@@ -157,9 +205,15 @@ class ComponentListActivity : AppCompatActivity() {
 
     private fun updateTotalPrice() {
         val totalPrice = findViewById<TextView>(R.id.priceTextView)
-        val total = adapter.getAllComponents().sumOf { part ->
-            val priceStr = part.customPrice?.takeIf { it.isNotBlank() } ?: part.price
-            priceStr.replace(Regex("[^\\d.]"), "").toDoubleOrNull() ?: 0.0
+        val total = adapter.getAllItems().sumOf { item ->
+            when (item) {
+                is ListItem.ComponentItem -> {
+                    SettingsDataManager.getTotalPrice(this, item.component.price, item.component.customPrice)
+                }
+                is ListItem.BundleItem -> {
+                    item.bundle.price?.replace(Regex("[^\\d.]"), "")?.toDoubleOrNull() ?: 0.0
+                }
+            }
         }
         val currencySymbol = SettingsDataManager.getCurrencySymbol(this)
         totalPrice.text = "Total: %s%.2f".format(currencySymbol, total)
@@ -212,32 +266,64 @@ class ComponentListActivity : AppCompatActivity() {
             val image = bundleImage.text.toString()
 
             lifecycleScope.launch {
-                val dao = (application as MyApplication).database.bundleDao()
-                val listDao = (application as MyApplication).database.componentDao()
+                val bundleDao = (application as MyApplication).database.bundleDao()
+                val componentDao = (application as MyApplication).database.componentDao()
 
-                val allLists = listDao.getAllListsWithComponents()
-                val matchedList = allLists.find { it.list.name == listName }
+                //val allLists = componentDao.getAllListsWithComponents()
+                //val matchedList = allLists.find { it.list.name == listName }
+                val matchedList = componentDao.getListWithItems(listName)
                 if (matchedList == null) {
                     Toast.makeText(this@ComponentListActivity, "List not found", Toast.LENGTH_SHORT).show()
                     return@launch
                 }
-
-                val newBundle = BundleEntity(
-                    name = name,
-                    listId = matchedList.list.id,
-                    vendor = vendor,
-                    price = price,
-                    url = url,
-                    image = image
-                )
-
-                val bundleId = dao.insert(newBundle)
+                val listId = matchedList.list.id
 
                 showComponentSelectionDialog(matchedList.components) { selectedComponents ->
+                    // Handle no components selected
+                    if (selectedComponents.isEmpty()) {
+                        Toast.makeText(this@ComponentListActivity, "No components selected", Toast.LENGTH_SHORT).show()
+                        dialog.dismiss()
+                        return@showComponentSelectionDialog
+                    }
+
                     lifecycleScope.launch {
-                        selectedComponents.forEach { component ->
-                            dao.insertCrossRef(BundleComponentCrossRef(bundleId.toInt(), component.url))
+                        // Create new bundle
+                        val newBundle = BundleEntity(
+                            name = name,
+                            listId = listId,
+                            vendor = vendor,
+                            price = price,
+                            url = url,
+                            image = image
+                        )
+
+                        val listId = matchedList.list.id
+                        val bundleId = bundleDao.insert(newBundle).toInt()
+                        val bundleCrossRefs = selectedComponents.map { component ->
+                            BundleComponentCrossRef(bundleId, component.url)
                         }
+                        bundleCrossRefs.forEach { crossRef ->
+                            bundleDao.insertCrossRef(crossRef)
+                        }
+
+                        selectedComponents.forEach { component ->
+                            componentDao.deleteCrossRef(listId, component.url)
+                        }
+
+                        runOnUiThread {
+                            selectedComponents.forEach { component ->
+                                adapter.removeComponentByUrl(component.url)
+                            }
+                            adapter.addBundle(newBundle)
+                            emptyText.visibility = if (adapter.getAllItems().isEmpty()) View.VISIBLE else View.GONE
+                            updateTotalPrice()
+                            val intent = BundleActivity.newIntent(this@ComponentListActivity, newBundle).apply {
+                                putExtra("list_name", listName)
+                                putExtra("list_id", listId)
+                            }
+                            startActivity(intent)
+                        }
+                        dialog.dismiss()
                         Toast.makeText(this@ComponentListActivity, "Bundle Created", Toast.LENGTH_SHORT).show()
                     }
                 }
@@ -282,5 +368,36 @@ class ComponentListActivity : AppCompatActivity() {
         }
 
         dialog.show()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        loadComponentsAndBundles()
+    }
+
+    private fun loadComponentsAndBundles() {
+        val listName = intent.getStringExtra("list_name")
+        if (listName != null) {
+            val dao = (application as MyApplication).database.componentDao()
+            lifecycleScope.launch {
+                val allLists = dao.getAllListsWithComponents()
+                val matchedList = allLists.find { it.list.name == listName }
+
+                matchedList?.let { listWithItems ->
+                    adapter.clearItems()
+                    listWithItems.toListItems().forEach { listItem ->
+                        when (listItem) {
+                            is ListItem.ComponentItem -> adapter.addComponents(listItem.component)
+                            is ListItem.BundleItem -> adapter.addBundle(listItem.bundle)
+                        }
+                    }
+                    emptyText.visibility = if (listWithItems.components.isEmpty() && listWithItems.bundles.isEmpty()) View.VISIBLE else View.GONE
+                    updateTotalPrice()
+                }
+            }
+        }
+        else {
+            Log.e("ComponentListActivity", "No List Name provided")
+        }
     }
 }

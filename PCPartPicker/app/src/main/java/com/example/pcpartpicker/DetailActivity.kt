@@ -24,8 +24,11 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.room.util.copy
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.launch
+
+// Rename to ComponentActivity
 
 class DetailActivity : AppCompatActivity() {
 
@@ -51,12 +54,35 @@ class DetailActivity : AppCompatActivity() {
         val name = intent.getStringExtra("product_name")
         val price = intent.getStringExtra("product_price")
         val image = intent.getStringExtra("product_image")
-        val url = intent.getStringExtra("product_url")
+        val url = intent.getStringExtra("product_url") ?: return
         val hideListButton = intent.getBooleanExtra(HIDE_LIST_BUTTON_KEY, false)
         val settingsSwitch = SettingsDataManager.getSavedSwitchState(this)
         val dao = (application as MyApplication).database.componentDao()
         val currencySymbol = SettingsDataManager.getCurrencySymbol(this@DetailActivity)
 
+        dao.getComponentByUrl(url).observe(this) { componentEntity ->
+            componentEntity?.let { component ->
+                val settingsSwitch = SettingsDataManager.getSavedSwitchState(this)
+                val displayPrice = SettingsDataManager.getDisplayPrice(
+                    this@DetailActivity,
+                    component.price,
+                    component.customPrice
+                )
+                detailPrice.text = displayPrice
+                customLinkButton.text = component.customVendor ?: "View Store"
+                customLinkButton.tag = component.customUrl
+
+                settingsButton.setOnClickListener {
+                    showCustomDetailsDialog(component.customPrice, component.customUrl, component.customVendor) { newPrice, newLink, newVendor ->
+                        lifecycleScope.launch {
+                            dao.updateComponentCustomData(url, newPrice, newLink, newVendor)
+                        }
+                    }
+                }
+            }
+        }
+
+        /*
         lifecycleScope.launch {
             val componentEntity = dao.getComponentByUrl(url ?: return@launch)
             settingsButton.setOnClickListener {
@@ -90,6 +116,7 @@ class DetailActivity : AppCompatActivity() {
                 customLinkButton.tag = it.customUrl
             }
         }
+         */
 
         if (hideListButton) {
             listButton.visibility = View.GONE
@@ -198,12 +225,12 @@ class DetailActivity : AppCompatActivity() {
     companion object {
         private const val HIDE_LIST_BUTTON_KEY = "hide_list_button"
 
-        fun newIntent(context: android.content.Context, part: Component.Part, hideListButton: Boolean = false): Intent {
+        fun newIntent(context: android.content.Context, component: ComponentEntity, hideListButton: Boolean = false): Intent {
             return Intent(context, DetailActivity::class.java).apply {
-                putExtra("product_name", part.name)
-                putExtra("product_url", part.url)
-                putExtra("product_price", part.price)
-                putExtra("product_image", part.image)
+                putExtra("product_name", component.name)
+                putExtra("product_url", component.url)
+                putExtra("product_price", component.price)
+                putExtra("product_image", component.image)
                 putExtra(HIDE_LIST_BUTTON_KEY, hideListButton)
             }
         }
