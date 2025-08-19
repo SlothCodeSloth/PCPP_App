@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.kotlinKapt) // ✅ use the alias here instead
+    id("org.jetbrains.dokka") version "1.9.0"
 }
 
 android {
@@ -33,6 +34,25 @@ android {
     }
     kotlinOptions {
         jvmTarget = "1.8"
+    }
+}
+
+tasks.dokkaHtml { // This is the main task for generating HTML documentation
+    outputDirectory.set(buildDir.resolve("dokka")) // Output directory for the documentation
+
+    // Configure source sets if necessary (often defaults are fine for simple Android projects)
+    // Dokka will typically find your Kotlin source files in src/main/java or src/main/kotlin
+    dokkaSourceSets {
+        configureEach { // Configures each source set (e.g., "main")
+            // Example: Exclude specific files or directories if needed
+            // suppressObviousFunctions.set(true) // Don't show "obvious" functions like getters/setters for data classes
+            includeNonPublic.set(true) // Set to true if you want to include internal/private declarations
+
+            // If you have external documentation links
+            // externalDocumentationLink {
+            //     url.set(java.net.URL("https://developer.android.com/reference/"))
+            // }
+        }
     }
 }
 

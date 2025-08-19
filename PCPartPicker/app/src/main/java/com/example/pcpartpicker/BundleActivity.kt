@@ -19,6 +19,20 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.launch
 
+
+/**
+ * Activity responsible for displaying and managing the details of a [BundleEntity]
+ * This activity allows users to:
+ * - View the name, price, and vendor URL of the bundle.
+ * - See a list of [ComponentEntity] items that are in the bundle.
+ * - Add existing components from the list to the bundle.
+ * - Edit the details (see Point 1) of the bundle.
+ *
+ * The bundle's information is passed to this activity via an [Intent]
+ * @see BundleEntity
+ * @see ComponentEntity
+ * @see ComponentAdapter
+ */
 class BundleActivity : AppCompatActivity() {
     private val viewModel: PartViewModel by viewModels { PartViewModelFactory((application as MyApplication).api) }
     private lateinit var componentAdapter: ComponentAdapter
@@ -29,6 +43,7 @@ class BundleActivity : AppCompatActivity() {
         //enableEdgeToEdge()
         setContentView(R.layout.activity_bundle)
 
+        // Set up UI elements
         val listName: TextView = findViewById(R.id.listTitleTextView)
         val bundleName: TextView = findViewById(R.id.bundleNameTextView)
         val bundlePrice: TextView = findViewById(R.id.bundlePriceTextView)
@@ -37,6 +52,7 @@ class BundleActivity : AppCompatActivity() {
         val addFab: FloatingActionButton = findViewById(R.id.addComponentFab)
         val settingsFab: FloatingActionButton = findViewById(R.id.bundleSettingsFab)
 
+        // Get bundle UI information from intent
         val bundleId = intent.getIntExtra("bundle_id", -1)
         val name = intent.getStringExtra("bundle_name")
         val price = intent.getStringExtra("bundle_price")?: "0,0"
@@ -45,20 +61,26 @@ class BundleActivity : AppCompatActivity() {
         listName.text = intent.getStringExtra("list_name") ?: "List Name"
         recyclerView.layoutManager = LinearLayoutManager(this)
 
+        // Handles taps on items inside of the RecyclerView
+        // - Opens [DetailActivity] if a Component item is selected.
+        // - Does nothing if a Bundle item is selected.
         componentAdapter = ComponentAdapter(
             mutableListOf(),
             onItemClick = { item ->
                 when (item) {
+                    // When a Component in the bundle is tapped, open its Detail View.
                     is ListItem.ComponentItem -> {
                         val intent = DetailActivity.newIntent(this, item.component, hideListButton = true)
                         startActivity(intent)
                     }
 
+                    // No instance where Bundle can be tapped from within a bundle.
                     is ListItem.BundleItem -> {
                     }
                 }
             },
 
+            // Not Used
             onAddClick = { selectedComponent ->
 
             }
@@ -68,11 +90,13 @@ class BundleActivity : AppCompatActivity() {
         bundleName.text = name
         bundlePrice.text = "Total: " + SettingsDataManager.formatPrice(this, price)
 
+        // Open the Bundle's Vendor URL in a browser.
         bundleUrl.setOnClickListener {
             val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
             startActivity(browserIntent)
         }
 
+        // Load the components associated with the Bundle.
         if (bundleId != -1) {
             val dao = (application as MyApplication).database.bundleDao()
             lifecycleScope.launch {
@@ -85,6 +109,7 @@ class BundleActivity : AppCompatActivity() {
             }
         }
 
+        // Add components from the List to the Bundle with a Floating Action Button.
         addFab.setOnClickListener {
             if (bundleId != -1) {
                 showComponentSelectionDialog(bundleId) { selectedComponents ->
@@ -122,6 +147,7 @@ class BundleActivity : AppCompatActivity() {
             }
         }
 
+        // Edit Bundle details using a Dialog, operable by Floating Action Button
         settingsFab.setOnClickListener {
             if (bundleId != -1) {
                 lifecycleScope.launch {
@@ -146,6 +172,13 @@ class BundleActivity : AppCompatActivity() {
     }
 
     companion object {
+        /**
+         * Helper method for constructing an [Intent] to launch [BundleActivity].
+         *
+         * @param context The context to use for the [Intent].
+         * @param bundle The [BundleEntity] containing the bundle's information.
+         * @return An [Intent] to launch [BundleActivity] with the given details.
+         */
         fun newIntent(context: android.content.Context, bundle: BundleEntity): Intent {
             return Intent(context, BundleActivity::class.java).apply {
                 putExtra("bundle_name", bundle.name)
@@ -156,6 +189,12 @@ class BundleActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Shows a dialog for selecting components to add to the bundle.
+     *
+     * @param bundleId The ID of the bundle to add components into.
+     * @param onConfirm A callback to invoke when the user confirms the selection of [ComponentEntity]s
+     */
     private fun showComponentSelectionDialog(bundleId: Int, onConfirm: (List<ComponentEntity>) -> Unit) {
         val dialogView = LayoutInflater.from(this)
             .inflate(R.layout.dialog_select_components, null)
@@ -191,6 +230,12 @@ class BundleActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Shows a dialog for editing the information of a [BundleEntity]
+     *
+     * @param currentBundle The [BundleEntity] being edited.
+     * @param onSave A callback to invoke when the user confirms the changes to the updated [BundleEntity]
+     */
     private fun showEditBundleDialog(currentBundle: BundleEntity, onSave: (BundleEntity) -> Unit) {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_create_bundle, null)
         val bundleName: EditText = dialogView.findViewById(R.id.bundleNameTextView)

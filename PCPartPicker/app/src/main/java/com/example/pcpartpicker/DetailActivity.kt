@@ -36,7 +36,7 @@ class DetailActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        //enableEdgeToEdge()
         setContentView(R.layout.activity_detail)
 
         // Acquire attributes from XML file
@@ -60,6 +60,7 @@ class DetailActivity : AppCompatActivity() {
         val dao = (application as MyApplication).database.componentDao()
         val currencySymbol = SettingsDataManager.getCurrencySymbol(this@DetailActivity)
 
+        // Observe the LiveData for the component with the given URL. Fill in all Component Details.
         dao.getComponentByUrl(url).observe(this) { componentEntity ->
             componentEntity?.let { component ->
                 val settingsSwitch = SettingsDataManager.getSavedSwitchState(this)
@@ -72,6 +73,9 @@ class DetailActivity : AppCompatActivity() {
                 customLinkButton.text = component.customVendor ?: "View Store"
                 customLinkButton.tag = component.customUrl
 
+
+                // Show the dialog for setting Custom Details for a Component. These override the
+                // information from the API in the UI.
                 settingsButton.setOnClickListener {
                     showCustomDetailsDialog(component.customPrice, component.customUrl, component.customVendor) { newPrice, newLink, newVendor ->
                         lifecycleScope.launch {
@@ -118,6 +122,7 @@ class DetailActivity : AppCompatActivity() {
         }
          */
 
+        // Alter the visibility of the "Add to List" Button and the "customPrice" TextView.
         if (hideListButton) {
             listButton.visibility = View.GONE
             if (settingsSwitch) {
@@ -141,7 +146,7 @@ class DetailActivity : AppCompatActivity() {
             .error(R.drawable.ic_launcher_background)
             .into(detailImage)
 
-        // Add clickable button
+        // Launch a browser with the URL of the component when the Button is pressed.
         detailLink.setOnClickListener {
             val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
             startActivity(browserIntent)
@@ -225,6 +230,15 @@ class DetailActivity : AppCompatActivity() {
     companion object {
         private const val HIDE_LIST_BUTTON_KEY = "hide_list_button"
 
+        /**
+         * Creates a new [Intent] to start [DetailActivity]
+         * This method allows for passing necessary data to the Activity.
+         * @param context The context to start the Activity from.
+         * @param component The [ComponentEntity] to display in the Activity.
+         * @param hideListButton A boolean denoting whether to hide the "Add to List" button.
+         *                       Defaults to 'false' and only true when called from the Search Fragment.
+         * @return An [Intent] configured to start [DetailActivity] with the necessary data.
+         */
         fun newIntent(context: android.content.Context, component: ComponentEntity, hideListButton: Boolean = false): Intent {
             return Intent(context, DetailActivity::class.java).apply {
                 putExtra("product_name", component.name)
@@ -236,6 +250,15 @@ class DetailActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Shows a dialog for the user to input or edit custom component details
+     * This dialog allows for setting a custom Vendor, Price, and URL for a component.
+     *
+     * @param currentCustomPrice The initial custom price to display in the dialog. Null if not set.
+     * @param currentCustomLink The initial custom URL to display in the dialog. Null if not set.
+     * @param currentCustomVendor The initial custom Vendor to display in the dialog. Null if not set.
+     * @param onSave A callback function to be invoked when the user is done editing the details.
+     */
     private fun showCustomDetailsDialog(currentCustomPrice: String?, currentCustomLink: String?, currentCustomVendor: String?, onSave: (String?, String?, String?) -> Unit) {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_create_custom, null)
         val customVendor: EditText = dialogView.findViewById(R.id.customStoreTextView)

@@ -9,6 +9,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 
+/**
+ * NOT USED IN FINAL VERSION
+ */
 class BundleAdapter (
     private val bundles: List<BundleWithComponents>
 ) : RecyclerView.Adapter<BundleAdapter.BundleViewHolder>() {
