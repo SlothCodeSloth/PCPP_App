@@ -8,7 +8,7 @@ import androidx.room.Room
 class MyApplication : Application() {
     val api: PyPartPickerApi by lazy {
         Retrofit.Builder()
-            .baseUrl("https://ikaserver.mynetgear.com/")
+            .baseUrl("") // Insert API Url here
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(PyPartPickerApi::class.java)
