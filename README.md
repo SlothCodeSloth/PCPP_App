@@ -39,6 +39,7 @@ An Android App inspired by the website PCPartPicker that allows users to:
 ## Project Structure
 com.example.pcpartpicker/
 ├── data/
+
 │ ├── BundleEntity.kt 
 │ ├── ComponentEntity.kt
 │ ├── BundleComponentCrossRef.kt
